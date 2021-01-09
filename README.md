@@ -34,10 +34,10 @@ Check your chrome browser version and download same versions chromedriver.exe fr
 # Usage
  * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. To find video link in YouTube click share and copy.
  * Open command prompt in YouTube-Viewer folder and type
-    ```bash
+    ```python
     $ python youtube_viewer.py
     ```
    * Enter amount of views you want.
-   * Input proxy list or let program to automatic handle proxies.
+   * Input proxy list or let program to automatically handle proxies.
 
  ![alt text](demo.png "Demo")
