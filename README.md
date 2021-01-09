@@ -32,7 +32,7 @@ Simple program to increase YouTube views written in Python.
 Check your chrome browser version and download same versions chromedriver.exe from https://chromedriver.chromium.org/downloads here and place it in the YouTube-Viewer folder.
 
 # Usage
- * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. To find video link in YouTube click share and copy.
+ * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy.)
  * Open command prompt in YouTube-Viewer folder and type
     ```python
     $ python youtube_viewer.py
