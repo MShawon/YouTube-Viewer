@@ -12,6 +12,7 @@
 
 # YouTube Viewer
 Simple program to increase YouTube views written in Python.
+
 **Discalimer:** This has been developed for educational purposes only.
 # Requirements
  * Python 3.x
@@ -21,7 +22,7 @@ Simple program to increase YouTube views written in Python.
 # Installation 
  Open command prompt and type
  ```bash
- $ git clone https://github.com/MShawon/Numerical-Method.git
+ $ git clone https://github.com/MShawon/YouTube-Viewer.git
 
  $ cd YouTube-Viewer
 
