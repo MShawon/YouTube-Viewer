@@ -1,4 +1,4 @@
-![ViewCount](https://views.whatilearened.today/views/github/MShawon/YouTube-viewer.svg)
+![ViewCount](https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg)
 
     Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888 
      YbdP  dP   Yb 88   88   88   88   88 88__dP 88__   
