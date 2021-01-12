@@ -1,12 +1,11 @@
 import concurrent.futures.thread
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import random
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-from fake_useragent import UserAgent
-from fake_useragent import UserAgentError
+from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -37,11 +36,12 @@ Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
                           YbdP   88 88""     YbdPYbdP   88""   88"Yb  
                            YP    88 888888    YP  YP    888888 88  Yb 
 """ + bcolors.ENDC)
+
 print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-print(bcolors.WARNING +'Collecting User-Agent...'+ bcolors.ENDC)
+print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
 try:
     ua = UserAgent(use_cache_server=False, verify_ssl=False)
 except UserAgentError:
@@ -61,7 +61,7 @@ view = []
 
 def load_url():
     global urls
-    print(bcolors.WARNING + 'Loading urls...'+ bcolors.ENDC)
+    print(bcolors.WARNING + 'Loading urls...' + bcolors.ENDC)
     filename = 'urls.txt'
     load = open(filename)
     loaded = [items.rstrip().strip() for items in load]
@@ -82,7 +82,7 @@ def gather_proxy():
     link_list = ['https://www.proxyscan.io/download?type=http',
                  'https://www.proxyscan.io/download?type=https',
                  'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
-                 'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt',
+                 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
                  'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/proxy.txt']
 
     for link in link_list:
@@ -111,28 +111,38 @@ def load_proxy():
     return proxy_list
 
 
+def sleeping():
+    time.sleep(30)
+
+
 def viewVideo(position):
     try:
         PROXY = proxy_list[position]
-
+        headers = {
+            'User-Agent': '{}'.format(ua.random),
+        }
         proxyDict = {
             "http": "http://"+PROXY,
             "https": "https://"+PROXY,
             "ftp": "ftp://"+PROXY,
         }
 
-        response = requests.get('https://www.youtube.com/', proxies=proxyDict)
+        response = requests.get(
+            'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
         status = response.status_code
 
         if status == 200:
             try:
+                print(bcolors.OKBLUE + "Tried {} |".format(position) +
+                      bcolors.OKGREEN + '{} --> Good Proxy | Searching for videos...'.format(PROXY) + bcolors.ENDC)
+
                 url = random.choice(urls)
                 options = webdriver.ChromeOptions()
                 options.add_experimental_option(
                     'excludeSwitches', ['enable-logging'])
                 options.headless = True
                 options.add_argument("--log-level=3")
-                options.add_argument(f"user-agent={ua.random}")
+                options.add_argument("user-agent={}".format(ua.random))
                 webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
                     'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
                 webdriver.DesiredCapabilities.CHROME['proxy'] = {
@@ -149,18 +159,21 @@ def viewVideo(position):
                 driver.get(url)
                 time.sleep(20)
 
+                play= driver.find_element_by_css_selector('button.ytp-large-play-button.ytp-button')
+                play.send_keys(Keys.ENTER)
+                
                 mute = driver.find_element_by_css_selector(
                     'button.ytp-mute-button.ytp-button')
                 mute.send_keys(Keys.ENTER)
-                
+
                 time.sleep(5)
                 video_len = driver.execute_script(
                     "return document.getElementById('movie_player').getDuration()")
 
                 print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
-                      ' {} --> Video Found : {} | Duration : {:.3f} seconds '.format(PROXY, url, int(video_len)/60) + bcolors.ENDC)
+                      ' {} --> Video Found : {} | Duration : {:.3f} minutes '.format(PROXY, url, int(video_len)/60) + bcolors.ENDC)
 
-                video_len = video_len - 0.5  #Removing 30 seconds from total duration 
+                video_len = video_len - 0.5  # Removing 30 seconds from total duration to avoid youtube next suggested video
                 time.sleep(video_len)
                 driver.quit()
 
@@ -170,22 +183,23 @@ def viewVideo(position):
                 status = 400
 
             except Exception as e:
-                print(bcolors.FAIL + f"Tried {position} |" + e + bcolors.ENDC)
+                print(bcolors.FAIL + "Tried {} |".format(position) + e + bcolors.ENDC)
                 driver.quit()
                 status = 400
                 pass
 
     except:
-        proxy_list.remove(PROXY)
-        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.FAIL +
-              ' {} --> Bad proxy removed from proxy list'.format(PROXY) + bcolors.ENDC)
+        print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.FAIL +
+              ' {} --> Bad proxy '.format(PROXY) + bcolors.ENDC)
         pass
 
+
 def main():
-    pool_number = [i+1 for i in range(total_proxies)]
+    pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = [executor.submit(viewVideo, position) for position in pool_number]
+        futures = [executor.submit(viewVideo, position)
+                   for position in pool_number]
 
         try:
             for future in as_completed(futures):
@@ -193,7 +207,7 @@ def main():
         except KeyboardInterrupt:
             executor._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
-            
+
 
 if __name__ == '__main__':
     load_url()
@@ -213,15 +227,17 @@ if __name__ == '__main__':
     proxy_list = list(set(proxy_list))
     total_proxies = len(proxy_list)
     print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
+    print(bcolors.WARNING +
+          'Video will be automatically muted after a few seconds' + bcolors.ENDC)
 
     check = 0
-    while len(view)<views:
+    while len(view) < views:
         try:
             check += 1
             if check == 1:
                 main()
             else:
-                gather_proxy()
+                sleeping()
                 main()
         except KeyboardInterrupt:
             exit()
