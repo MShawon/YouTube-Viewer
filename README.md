@@ -34,13 +34,20 @@ Simple program to increase YouTube views written in Python.
  * After closing program, if chromedrivers are still running . You may want to double click `killdrive.bat` to close all chrome instances. 
 
 # Usage
+<<<<<<< HEAD
  * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
+=======
+ * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy.)
+>>>>>>> 9d52b447b8c9641a4ada5a5690708b2e51f526fe
  * Open command prompt in YouTube-Viewer folder and type
-    ```bash
+    ```python
     $ python youtube_viewer.py
     ```
    * Enter amount of views you want.
+<<<<<<< HEAD
    * Enter number of threads. 
+=======
+>>>>>>> 9d52b447b8c9641a4ada5a5690708b2e51f526fe
    * Input proxy list or let program to automatically handle proxies.
 
  ![alt text](demo.png "Demo")
