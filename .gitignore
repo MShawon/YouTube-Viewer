@@ -1,3 +1,4 @@
 .venv/
 .vscode/
 *.log
+require.txt
