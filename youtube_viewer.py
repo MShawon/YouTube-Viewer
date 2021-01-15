@@ -1,5 +1,6 @@
 import concurrent.futures.thread
 import os
+import platform
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -42,6 +43,7 @@ print(bcolors.OKCYAN + """
 """ + bcolors.ENDC)
 
 print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
+
 try:
     ua = UserAgent(use_cache_server=False, verify_ssl=False)
 except UserAgentError:
@@ -53,6 +55,7 @@ except UserAgentError:
 PROXY = None
 driver = None
 status = None
+driver_path = None
 
 urls = []
 proxy_list = []
@@ -117,6 +120,10 @@ def sleeping():
 
 def viewVideo(position):
     try:
+        '''
+        To reduce memory consumption proxy will be checked by request module
+        without opening any chrome instances.
+        '''
         PROXY = proxy_list[position]
         headers = {
             'User-Agent': '{}'.format(ua.random),
@@ -154,14 +161,15 @@ def viewVideo(position):
                 }
 
                 driver = webdriver.Chrome(
-                    executable_path="chromedriver.exe", options=options)
+                    executable_path=driver_path, options=options)
 
                 driver.get(url)
                 time.sleep(20)
 
-                play= driver.find_element_by_css_selector('button.ytp-large-play-button.ytp-button')
+                play = driver.find_element_by_css_selector(
+                    'button.ytp-large-play-button.ytp-button')
                 play.send_keys(Keys.ENTER)
-                
+
                 mute = driver.find_element_by_css_selector(
                     'button.ytp-mute-button.ytp-button')
                 mute.send_keys(Keys.ENTER)
@@ -173,7 +181,8 @@ def viewVideo(position):
                 print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
                       ' {} --> Video Found : {} | Duration : {:.3f} minutes '.format(PROXY, url, int(video_len)/60) + bcolors.ENDC)
 
-                video_len = video_len - 0.5  # Removing 30 seconds from total duration to avoid youtube next suggested video
+                # Removing 30 seconds from total duration to avoid youtube next suggested video
+                video_len = video_len - 0.5
                 time.sleep(video_len)
                 driver.quit()
 
@@ -210,6 +219,16 @@ def main():
 
 
 if __name__ == '__main__':
+
+    OSNAME = platform.system()
+    if OSNAME == 'Windows':
+        driver_path = 'chromedriver_win32/chromedriver.exe'
+    elif OSNAME == 'Linux':
+        driver_path = 'chromedriver_linux64/chromedriver'
+    else:
+        print('{} OS is not supported.'.format(OSNAME))
+        exit()
+
     load_url()
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
