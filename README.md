@@ -1,4 +1,12 @@
-![ViewCount](https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg)
+<p align="center">
+<img alt="ViewCount" src="https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg">
+<img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux-success">
+<a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
+<a href="https://saythanks.io/to/as2robot143@gmail.com">
+  <img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg">
+</a>
+</p>
+
 
     Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888 
      YbdP  dP   Yb 88   88   88   88   88 88__dP 88__   
