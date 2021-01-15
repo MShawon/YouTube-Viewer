@@ -18,49 +18,75 @@ Simple program to increase YouTube views written in Python.
  * Python 3.x
  * High speed Internet Connection
  * Good proxy list
-  
-# Installation 
- Open command prompt and type
- ```bash
- $ git clone https://github.com/MShawon/YouTube-Viewer.git
 
- $ cd YouTube-Viewer
+#<ins> Windows</ins>  
+* ## Installation 
+ 
+  Open command prompt and type
+  ```bash
+  $ git clone https://github.com/MShawon/YouTube-Viewer.git
 
- $ pip install -r requirements.txt
- ```
-## Important
- * You need to have Google Chrome installed on your device.
- * Check your Google Chrome version and download same versions **chromedriver.exe** from https://chromedriver.chromium.org/downloads here and place it in the **chromedriver_win32** and **chromedriver_linux64** folder respectively for Windows and Linux.
+  $ cd YouTube-Viewer
 
- * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use `GoodProxy.txt` for proxy in `youtube_viewer.py`
-      ### Windows
+  $ pip install -r requirements.txt
+  ```
+* ## Important
+   * You need to have Google Chrome installed on your device.
+   * Check your Google Chrome version and download same version **chromedriver.exe** from https://chromedriver.chromium.org/downloads here and place it in the **chromedriver_win32** folder.
+
+   * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
       ```
       $ python proxy_check.py
       ```
-      ### Linux
-      ```
-      $ python3 proxy_check.py
-      ```
 
- * After closing program, if chromedrivers are still running . 
- For Windows, you may want to double click `killdrive.bat` to close all chrome instances.
- For Linux, in terminal run `ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9`
+   * After closing program, if chromedrivers are still running. You may want to double click **killdrive.bat** to close all chrome instances.
 
-# Usage
- * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
- * Open command prompt in YouTube-Viewer folder and run
-    ### Windows
-      ```
-      $ python youtube_viewer.py
-      ```
-    ### Linux
-      ```
-      $ python3 youtube_viewer.py
-      ```
- * Enter amount of views you want.
- * Provide number of threads. 
- * Input proxy list or let program to automatically handle proxies.
 
- ![alt text](demo_windows.png "Demo Windows")
- ![alt text](demo_linux.png "Demo Linux")
+* ## Usage
+   * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
+   * Open command prompt in YouTube-Viewer folder and run
+        ```
+        $ python youtube_viewer.py
+        ```
+   * Enter amount of views you want.
+   * Provide number of threads. 
+   * Input proxy list or let program to handle proxies automatically.
+
+    ![alt text](demo_windows.png "Demo Windows")
+
+#<ins> Linux</ins>  
+* ## Installation 
+ 
+  Open your favourite terminal and run
+  ```bash
+  $ git clone https://github.com/MShawon/YouTube-Viewer.git
+
+  $ cd YouTube-Viewer
+
+  $ pip3 install -r requirements.txt
+  ```
+* ## Important
+   * You need to have Google Chrome installed on your device.
+   * Check your Google Chrome version and download same version **chromedriver** from https://chromedriver.chromium.org/downloads here and place it in the  **chromedriver_linux64** folder.
+
+   * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
+        ```
+        $ python3 proxy_check.py
+        ```
+
+   * After closing program, if chromedrivers are still running. Open your terminal and run 
+      ```
+      ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9
+      ```
+* ## Usage
+   * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
+   * Open command prompt in YouTube-Viewer folder and run
+        ```
+        $ python3 youtube_viewer.py
+        ```
+   * Enter amount of views you want.
+   * Provide number of threads. 
+   * Input proxy list or let program to handle proxies automatically.
+
+   ![alt text](demo_linux.png "Demo Linux")
 
