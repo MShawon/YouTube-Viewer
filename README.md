@@ -19,7 +19,7 @@ Simple program to increase YouTube views written in Python.
  * High speed Internet Connection
  * Good proxy list
 
-#<ins> Windows</ins>  
+# Windows
 * ## Installation 
  
   Open command prompt and type
@@ -54,7 +54,7 @@ Simple program to increase YouTube views written in Python.
 
     ![alt text](demo_windows.png "Demo Windows")
 
-#<ins> Linux</ins>  
+# Linux
 * ## Installation 
  
   Open your favourite terminal and run
