@@ -1,9 +1,13 @@
 <p align="center">
 <img alt="ViewCount" src="https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg">
 <img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux-success">
+<a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues Closed" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
 <a href="https://saythanks.io/to/as2robot143@gmail.com">
   <img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg">
+</a>
+<a href="https://paypal.me/shawon107">
+  <img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg">
 </a>
 </p>
 
