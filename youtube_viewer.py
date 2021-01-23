@@ -9,6 +9,9 @@ import requests
 from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 os.system("")
 
@@ -86,7 +89,8 @@ def gather_proxy():
                  'https://www.proxyscan.io/download?type=https',
                  'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
                  'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
-                 'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/proxy.txt']
+                 'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/proxy.txt',
+                 'https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt']
 
     for link in link_list:
         response = requests.get(link)
@@ -164,25 +168,37 @@ def viewVideo(position):
                     executable_path=driver_path, options=options)
 
                 driver.get(url)
-                time.sleep(20)
 
-                play = driver.find_element_by_css_selector(
-                    'button.ytp-large-play-button.ytp-button')
+                WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button.ytp-button.ytp-settings-button"))).click()
+                driver.find_element_by_xpath(
+                    "//div[contains(text(),'Quality')]").click()
+
+                # changing video quality to 144p to save bandwidth
+                quality = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                    (By.XPATH, "//span[contains(string(),'144p')]")))
+                quality.click()
+
+                play = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
                 play.send_keys(Keys.ENTER)
 
-                mute = driver.find_element_by_css_selector(
-                    'button.ytp-mute-button.ytp-button')
+                mute = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, 'button.ytp-mute-button.ytp-button')))
                 mute.send_keys(Keys.ENTER)
 
-                time.sleep(5)
+                time.sleep(2)
                 video_len = driver.execute_script(
                     "return document.getElementById('movie_player').getDuration()")
 
-                print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
-                      ' {} --> Video Found : {} | Duration : {:.3f} minutes '.format(PROXY, url, int(video_len)/60) + bcolors.ENDC)
+                # Randomizing watch duration between 85% to 95% of total video duration
+                # to avoid pattern and youtube next suggested video
+                video_len = video_len*random.uniform(.85, .95)
 
-                # Removing 30 seconds from total duration to avoid youtube next suggested video
-                video_len = video_len - 0.5
+                duration = time.strftime("%Hh:%Mm:%Ss", time.gmtime(video_len))
+                print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
+                      ' {} --> Video Found : {} | Watch Duration : {} '.format(PROXY, url, duration) + bcolors.ENDC)
+
                 time.sleep(video_len)
                 driver.quit()
 
@@ -243,7 +259,9 @@ if __name__ == '__main__':
     else:
         load_proxy()
 
-    proxy_list = list(set(proxy_list))
+    proxy_list = list(set(proxy_list))  # removing duplicate proxies
+    proxy_list = list(filter(None, proxy_list))  # removing empty proxies
+
     total_proxies = len(proxy_list)
     print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
     print(bcolors.WARNING +

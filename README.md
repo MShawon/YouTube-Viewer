@@ -3,12 +3,8 @@
 <img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux-success">
 <a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues Closed" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
-<a href="https://saythanks.io/to/as2robot143@gmail.com">
-  <img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg">
-</a>
-<a href="https://paypal.me/shawon107">
-  <img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg">
-</a>
+<a href="https://saythanks.io/to/as2robot143@gmail.com"><img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg"></a>
+<a href="https://paypal.me/shawon107"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg"></a>
 </p>
 
 
@@ -53,6 +49,11 @@ Simple program to increase YouTube views written in Python.
 
    * After closing program, if chromedrivers are still running. You may want to double click **killdrive.bat** to close all chrome instances.
 
+* ## Test
+  This will clear your confusion as main program will run in the background.
+   ```
+   $ python test.py
+   ``` 
 
 * ## Usage
    * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
@@ -90,6 +91,12 @@ Simple program to increase YouTube views written in Python.
       ```
       ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9
       ```
+* ## Test
+  This will clear your confusion as main program will run in the background.
+   ```
+   $ python3 test.py
+   ``` 
+
 * ## Usage
    * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
    * Open command prompt in YouTube-Viewer folder and run
