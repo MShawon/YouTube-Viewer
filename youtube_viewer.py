@@ -61,13 +61,11 @@ driver = None
 status = None
 driver_path = None
 
-urls = []
-proxy_list = []
 view = []
 
 
 def load_url():
-    global urls
+    links = []
     print(bcolors.WARNING + 'Loading urls...' + bcolors.ENDC)
     filename = 'urls.txt'
     load = open(filename)
@@ -75,15 +73,18 @@ def load_url():
     load.close()
 
     for lines in loaded:
-        urls.append(lines)
+        links.append(lines)
 
     print(bcolors.OKGREEN +
-          '{} url loaded from urls.txt'.format(len(urls)) + bcolors.ENDC)
-    return urls
+          '{} url loaded from urls.txt'.format(len(links)) + bcolors.ENDC)
+    
+    links_dict = {link:None for link in links}
+
+    return links, links_dict
 
 
 def gather_proxy():
-    global proxy_list
+    proxies = []
     print(bcolors.OKGREEN + 'Scraping proxies ...' + bcolors.ENDC)
 
     link_list = ['https://www.proxyscan.io/download?type=http',
@@ -97,15 +98,15 @@ def gather_proxy():
         response = requests.get(link)
         output = response.content.decode()
         proxy = output.split('\n')
-        proxy_list = proxy_list + proxy
+        proxies = proxies + proxy
         print(bcolors.OKGREEN +
               '{} proxies gathered from {}'.format(len(proxy), link) + bcolors.ENDC)
 
-    return proxy_list
+    return proxies
 
 
 def load_proxy():
-    global proxy_list
+    proxies = []
 
     filename = input(bcolors.OKBLUE +
                      'Enter your proxy file name: ' + bcolors.ENDC)
@@ -114,9 +115,9 @@ def load_proxy():
     load.close()
 
     for lines in loaded:
-        proxy_list.append(lines)
+        proxies.append(lines)
 
-    return proxy_list
+    return proxies
 
 
 def sleeping():
@@ -170,28 +171,18 @@ def viewVideo(position):
 
                 driver.get(url)
 
-                WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "button.ytp-button.ytp-settings-button"))).click()
-                driver.find_element_by_xpath(
-                    "//div[contains(text(),'Quality')]").click()
-
-                # changing video quality to 144p to save bandwidth
-                quality = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-                    (By.XPATH, "//span[contains(string(),'144p')]")))
-                quality.click()
-
                 play = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
                 play.send_keys(Keys.ENTER)
 
-                mute = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, 'button.ytp-mute-button.ytp-button')))
-                mute.send_keys(Keys.ENTER)
-
                 time.sleep(2)
-                video_len = driver.execute_script(
-                    "return document.getElementById('movie_player').getDuration()")
 
+                if not duration_dict[url]:
+                    video_len = driver.execute_script(
+                        "return document.getElementById('movie_player').getDuration()")
+                    duration_dict[url] = video_len
+                else:
+                    video_len = duration_dict[url]
                 # Randomizing watch duration between 85% to 95% of total video duration
                 # to avoid pattern and youtube next suggested video
                 video_len = video_len*random.uniform(.85, .95)
@@ -233,8 +224,11 @@ def main():
                 if len(view) == views:
                     print(
                         bcolors.WARNING + 'Amount of views added : {} | Stopping program...But this will take some time to close all threads.'.format(views) + bcolors.ENDC)
+                    executor._threads.clear()
+                    concurrent.futures.thread._threads_queues.clear()
                     break
                 future.result()
+        
         except KeyboardInterrupt:
             executor._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
@@ -251,7 +245,7 @@ if __name__ == '__main__':
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
 
-    load_url()
+    urls, duration_dict = load_url()
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
     threads = int(
@@ -261,17 +255,15 @@ if __name__ == '__main__':
         bcolors.OKBLUE + 'Let YouTube Viewer handle proxies ? [Y/n] : ' + bcolors.ENDC)).lower()
 
     if handle_proxy == 'y' or handle_proxy == 'yes' or handle_proxy == '':
-        gather_proxy()
+        proxy_list = gather_proxy()
     else:
-        load_proxy()
+        proxy_list = load_proxy()
 
     proxy_list = list(set(proxy_list))  # removing duplicate proxies
     proxy_list = list(filter(None, proxy_list))  # removing empty proxies
 
     total_proxies = len(proxy_list)
     print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
-    print(bcolors.WARNING +
-          'Video will be automatically muted after a few seconds' + bcolors.ENDC)
 
     check = 0
     while len(view) < views:
