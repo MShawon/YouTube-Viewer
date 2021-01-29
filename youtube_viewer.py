@@ -2,16 +2,17 @@ import concurrent.futures.thread
 import os
 import platform
 import random
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 os.system("")
 
@@ -175,15 +176,15 @@ def viewVideo(position):
                     "//div[contains(text(),'Quality')]").click()
 
                 # changing video quality to 144p to save bandwidth
-                quality = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                quality = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                     (By.XPATH, "//span[contains(string(),'144p')]")))
                 quality.click()
 
-                play = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                play = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
                 play.send_keys(Keys.ENTER)
 
-                mute = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                mute = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, 'button.ytp-mute-button.ytp-button')))
                 mute.send_keys(Keys.ENTER)
 
@@ -208,7 +209,8 @@ def viewVideo(position):
                 status = 400
 
             except Exception as e:
-                print(bcolors.FAIL + "Tried {} |".format(position) + e + bcolors.ENDC)
+                print(bcolors.FAIL + "Tried {} |".format(position) +
+                      str(e) + bcolors.ENDC)
                 driver.quit()
                 status = 400
                 pass
@@ -228,6 +230,10 @@ def main():
 
         try:
             for future in as_completed(futures):
+                if len(view) == views:
+                    print(
+                        bcolors.WARNING + 'Amount of views added : {} | Stopping program...But this will take some time to close all threads.'.format(views) + bcolors.ENDC)
+                    break
                 future.result()
         except KeyboardInterrupt:
             executor._threads.clear()
@@ -243,7 +249,7 @@ if __name__ == '__main__':
         driver_path = 'chromedriver_linux64/chromedriver'
     else:
         print('{} OS is not supported.'.format(OSNAME))
-        exit()
+        sys.exit()
 
     load_url()
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
@@ -275,6 +281,8 @@ if __name__ == '__main__':
                 main()
             else:
                 sleeping()
+                print(bcolors.WARNING +
+                      'Total Checked : {} times'.format(check) + bcolors.ENDC)
                 main()
         except KeyboardInterrupt:
-            exit()
+            sys.exit()

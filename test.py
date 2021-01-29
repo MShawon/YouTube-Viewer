@@ -47,25 +47,25 @@ try:
     link = urls[0]
 
     driver.get(link)
-
-    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+    
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CSS_SELECTOR, "button.ytp-button.ytp-settings-button"))).click()
     driver.find_element_by_xpath("//div[contains(text(),'Quality')]").click()
-
-    quality = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+    
+    quality = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.XPATH, "//span[contains(string(),'144p')]")))
     print("Video quality is visible? " + str(quality.is_displayed()))
     quality.click()
 
     print('Video quality is reduced to 144p')
 
-    play = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+    play = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
     play.send_keys(Keys.ENTER)
 
-    mute = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+    mute = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CSS_SELECTOR, 'button.ytp-mute-button.ytp-button')))
-    mute.send_keys(Keys.ENTER)
+    mute.send_keys(Keys.ENTER)    
 
     video_len = driver.execute_script(
         "return document.getElementById('movie_player').getDuration()")
