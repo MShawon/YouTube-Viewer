@@ -4,9 +4,11 @@
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aclosed"><img alt="Closed issues" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aopen"><img alt="Open issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
 <a href="https://saythanks.io/to/as2robot143@gmail.com"><img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg"></a>
-<a href="https://paypal.me/shawon107"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg"></a>
 </p>
-
+<p align="center">
+<a href="https://paypal.me/shawon107"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg"></a>
+<a href="https://github.com/MShawon/github-clone-count-badge"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://github.com/MShawon/YouTube-Viewer/blob/master/clone.json?raw=True&logo=github"></a>
+</p>
 
     Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
      YbdP  dP   Yb 88   88   88   88   88 88__dP 88__   
@@ -22,6 +24,9 @@
 Simple program to increase YouTube views written in Python.
 
 **Discalimer:** This has been developed for educational purposes only.
+
+**Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
+
 # Requirements
  * Python 3.x
  * High speed Internet Connection
