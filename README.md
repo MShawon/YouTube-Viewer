@@ -1,8 +1,8 @@
 <p align="center">
 <img alt="ViewCount" src="https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg">
 <img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux-success">
-<a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues Closed" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
-<a href="https://github.com/MShawon/YouTube-Viewer/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
+<a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aclosed"><img alt="Closed issues" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
+<a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aopen"><img alt="Open issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
 <a href="https://saythanks.io/to/as2robot143@gmail.com"><img alt="SayThanks" src="https://img.shields.io/badge/Say-thanks!-1EAEDB.svg"></a>
 <a href="https://paypal.me/shawon107"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg"></a>
 </p>
@@ -26,6 +26,10 @@ Simple program to increase YouTube views written in Python.
  * Python 3.x
  * High speed Internet Connection
  * Good proxy list
+
+# New feature
+ Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.
+ Put keyword and title like this format `keyword : video title` in **search.txt** 
 
 # Windows
 * ## Installation 

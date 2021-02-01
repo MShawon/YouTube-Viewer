@@ -62,7 +62,7 @@ status = None
 driver_path = None
 
 view = []
-
+duration_dict = {}
 
 def load_url():
     links = []
@@ -78,11 +78,26 @@ def load_url():
     print(bcolors.OKGREEN +
           '{} url loaded from urls.txt'.format(len(links)) + bcolors.ENDC)
     
-    links_dict = {link:None for link in links}
+    return links
 
-    return links, links_dict
+def load_search():
+    search = []
+    print(bcolors.WARNING + 'Loading queries...' + bcolors.ENDC)
+    filename = 'search.txt'
+    load = open(filename)
+    loaded = [items.rstrip().strip() for items in load]
+    loaded = [[i.strip() for i in items.split(':')] for items in loaded]
+    load.close()
 
+    for lines in loaded:
+        search.append(lines)
 
+    print(bcolors.OKGREEN +
+          '{} query loaded from search.txt'.format(len(search)) + bcolors.ENDC)
+
+    return search
+    
+      
 def gather_proxy():
     proxies = []
     print(bcolors.OKGREEN + 'Scraping proxies ...' + bcolors.ENDC)
@@ -149,7 +164,14 @@ def viewVideo(position):
                 print(bcolors.OKBLUE + "Tried {} |".format(position) +
                       bcolors.OKGREEN + '{} --> Good Proxy | Searching for videos...'.format(PROXY) + bcolors.ENDC)
 
-                url = random.choice(urls)
+                if position % 2:
+                    method = 1
+                    url = random.choice(urls)
+                else:
+                    method = 2
+                    query = random.choice(queries)
+                    url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
+
                 options = webdriver.ChromeOptions()
                 options.add_experimental_option(
                     'excludeSwitches', ['enable-logging'])
@@ -171,18 +193,25 @@ def viewVideo(position):
 
                 driver.get(url)
 
-                play = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
-                play.send_keys(Keys.ENTER)
+                if method == 1:
+                    play = WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
+                    play.send_keys(Keys.ENTER)
+
+                else:
+                    find_video = WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+                        (By.XPATH, f'//*[@title="{query[1]}"]')))
+                    find_video.click()
 
                 time.sleep(2)
 
-                if not duration_dict[url]:
+                try:
+                    video_len = duration_dict[url]
+                except KeyError:
                     video_len = driver.execute_script(
                         "return document.getElementById('movie_player').getDuration()")
                     duration_dict[url] = video_len
-                else:
-                    video_len = duration_dict[url]
+
                 # Randomizing watch duration between 85% to 95% of total video duration
                 # to avoid pattern and youtube next suggested video
                 video_len = video_len*random.uniform(.85, .95)
@@ -245,7 +274,9 @@ if __name__ == '__main__':
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
 
-    urls, duration_dict = load_url()
+    urls = load_url()
+    queries = load_search()
+
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
     threads = int(
