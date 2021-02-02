@@ -84,7 +84,7 @@ def load_search():
     search = []
     print(bcolors.WARNING + 'Loading queries...' + bcolors.ENDC)
     filename = 'search.txt'
-    load = open(filename)
+    load = open(filename, encoding="utf-8")
     loaded = [items.rstrip().strip() for items in load]
     loaded = [[i.strip() for i in items.split(':')] for items in loaded]
     load.close()
@@ -94,7 +94,7 @@ def load_search():
 
     print(bcolors.OKGREEN +
           '{} query loaded from search.txt'.format(len(search)) + bcolors.ENDC)
-
+    
     return search
     
       
