@@ -64,6 +64,7 @@ driver_path = None
 view = []
 duration_dict = {}
 
+
 def load_url():
     links = []
     print(bcolors.WARNING + 'Loading urls...' + bcolors.ENDC)
@@ -77,8 +78,9 @@ def load_url():
 
     print(bcolors.OKGREEN +
           '{} url loaded from urls.txt'.format(len(links)) + bcolors.ENDC)
-    
+
     return links
+
 
 def load_search():
     search = []
@@ -94,10 +96,10 @@ def load_search():
 
     print(bcolors.OKGREEN +
           '{} query loaded from search.txt'.format(len(search)) + bcolors.ENDC)
-    
+
     return search
-    
-      
+
+
 def gather_proxy():
     proxies = []
     print(bcolors.OKGREEN + 'Scraping proxies ...' + bcolors.ENDC)
@@ -203,13 +205,15 @@ def viewVideo(position):
                         (By.XPATH, f'//*[@title="{query[1]}"]')))
                     find_video.click()
 
-                time.sleep(2)
-
                 try:
                     video_len = duration_dict[url]
                 except KeyError:
+                    WebDriverWait(driver, 50).until(
+                        EC.element_to_be_clickable((By.ID, 'movie_player')))
+                        
                     video_len = driver.execute_script(
                         "return document.getElementById('movie_player').getDuration()")
+
                     duration_dict[url] = video_len
 
                 # Randomizing watch duration between 85% to 95% of total video duration
@@ -257,7 +261,7 @@ def main():
                     concurrent.futures.thread._threads_queues.clear()
                     break
                 future.result()
-        
+
         except KeyboardInterrupt:
             executor._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
