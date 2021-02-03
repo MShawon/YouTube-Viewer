@@ -31,7 +31,8 @@ Simple program to increase YouTube views written in Python.
  * Python 3.x
  * High speed Internet Connection
  * Good proxy list
-
+ * Google Chrome installed on your OS (not Chromium)
+ 
 # New feature
  Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.
  Put keyword and title like this format `keyword : video title` in **search.txt** 
@@ -48,7 +49,6 @@ Simple program to increase YouTube views written in Python.
   $ pip install -r requirements.txt
   ```
 * ## Important
-   * You need to have Google Chrome installed on your device.
    * Check your Google Chrome version and download same version **chromedriver.exe** from https://chromedriver.chromium.org/downloads here and place it in the **chromedriver_win32** folder.
 
    * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
@@ -88,7 +88,6 @@ Simple program to increase YouTube views written in Python.
   $ pip3 install -r requirements.txt
   ```
 * ## Important
-   * You need to have Google Chrome installed on your device.
    * Check your Google Chrome version and download same version **chromedriver** from https://chromedriver.chromium.org/downloads here and place it in the  **chromedriver_linux64** folder.
 
    * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
