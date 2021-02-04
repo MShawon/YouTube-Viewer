@@ -117,3 +117,5 @@ Simple program to increase YouTube views written in Python.
 
    ![alt text](demo_linux.png "Demo Linux")
 
+# Support YouTube-Viewer with a donation
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=QER66NU8WHPCA)
