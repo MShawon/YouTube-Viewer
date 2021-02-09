@@ -106,6 +106,7 @@ def gather_proxy():
 
     link_list = ['https://www.proxyscan.io/download?type=http',
                  'https://www.proxyscan.io/download?type=https',
+                 'https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all',
                  'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
                  'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
                  'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/proxy.txt',
