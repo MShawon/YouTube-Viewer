@@ -87,8 +87,13 @@ def proxyCheck(position):
 
     # print(proxyDict)
     try:
+        try:
+            agent = ua.random
+        except:
+            agent = random.choice(ua)
+
         headers = {
-            'User-Agent': '{}'.format(ua.random),
+            'User-Agent': '{}'.format(agent),
         }
 
         response = requests.get(

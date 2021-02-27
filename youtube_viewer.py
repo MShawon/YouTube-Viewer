@@ -148,8 +148,14 @@ def viewVideo(position):
         without opening any chrome instances.
         '''
         PROXY = proxy_list[position]
+
+        try:
+            agent = ua.random
+        except:
+            agent = random.choice(ua)
+
         headers = {
-            'User-Agent': '{}'.format(ua.random),
+            'User-Agent': '{}'.format(agent),
         }
         proxyDict = {
             "http": "http://"+PROXY,
@@ -179,7 +185,7 @@ def viewVideo(position):
                     'excludeSwitches', ['enable-logging'])
                 options.headless = True
                 options.add_argument("--log-level=3")
-                options.add_argument("user-agent={}".format(ua.random))
+                options.add_argument("user-agent={}".format(agent))
                 webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
                     'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
                 webdriver.DesiredCapabilities.CHROME['proxy'] = {
