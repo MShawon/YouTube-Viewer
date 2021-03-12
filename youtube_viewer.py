@@ -165,13 +165,12 @@ def sleeping():
     time.sleep(30)
 
 
-def viewVideo(position):
+def mainViewer(type1, type2, PROXY, position):
     try:
         '''
         To reduce memory consumption proxy will be checked by request module
         without opening any chrome instances.
         '''
-        PROXY = proxy_list[position]
 
         try:
             agent = ua.random
@@ -182,9 +181,8 @@ def viewVideo(position):
             'User-Agent': '{}'.format(agent),
         }
         proxyDict = {
-            "http": "http://"+PROXY,
-            "https": "https://"+PROXY,
-            "ftp": "ftp://"+PROXY,
+            "http": f"{type1}://"+PROXY,
+            "https": f"{type2}://"+PROXY,
         }
 
         response = requests.get(
@@ -194,7 +192,7 @@ def viewVideo(position):
         if status == 200:
             try:
                 print(bcolors.OKBLUE + "Tried {} |".format(position) +
-                      bcolors.OKGREEN + '{} --> Good Proxy | Searching for videos...'.format(PROXY) + bcolors.ENDC)
+                      bcolors.OKGREEN + '{} --> Good Proxy | Type : {} | Searching for videos...'.format(PROXY, type2) + bcolors.ENDC)
 
                 if position % 2:
                     method = 1
@@ -212,13 +210,16 @@ def viewVideo(position):
                 options.add_argument("user-agent={}".format(agent))
                 webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
                     'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
-                webdriver.DesiredCapabilities.CHROME['proxy'] = {
-                    "httpProxy": PROXY,
-                    "ftpProxy": PROXY,
-                    "sslProxy": PROXY,
 
-                    "proxyType": "MANUAL",
-                }
+                if type1 == 'http':
+                    webdriver.DesiredCapabilities.CHROME['proxy'] = {
+                        "httpProxy": PROXY,
+                        "sslProxy": PROXY,
+
+                        "proxyType": "MANUAL",
+                    }
+                else:
+                    options.add_argument(f'--proxy-server={type1}://' + PROXY)
 
                 driver = webdriver.Chrome(
                     executable_path=driver_path, options=options)
@@ -226,21 +227,21 @@ def viewVideo(position):
                 driver.get(url)
 
                 if method == 1:
-                    play = WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+                    play = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
                         (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
                     play.send_keys(Keys.ENTER)
 
                 else:
-                    find_video = WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+                    find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
                         (By.XPATH, f'//*[@title="{query[1]}"]')))
                     find_video.click()
 
                 try:
                     video_len = duration_dict[url]
                 except KeyError:
-                    WebDriverWait(driver, 50).until(
+                    WebDriverWait(driver, 80).until(
                         EC.element_to_be_clickable((By.ID, 'movie_player')))
-                        
+
                     video_len = driver.execute_script(
                         "return document.getElementById('movie_player').getDuration()")
 
@@ -275,6 +276,14 @@ def viewVideo(position):
         pass
 
 
+def viewVideo(position):
+    PROXY = proxy_list[position]
+
+    mainViewer('http', 'https', PROXY, position)
+    mainViewer('socks4', 'socks4', PROXY, position)
+    mainViewer('socks5', 'socks5', PROXY, position)
+
+
 def main():
     pool_number = [i for i in range(total_proxies)]
 
@@ -286,7 +295,7 @@ def main():
             for future in as_completed(futures):
                 if len(view) == views:
                     print(
-                        bcolors.WARNING + 'Amount of views added : {} | Stopping program...But this will take some time to close all threads.'.format(views) + bcolors.ENDC)
+                        bcolors.WARNING + 'Amount of views added : {} | Stopping program...But this can take some time to close all threads.'.format(views) + bcolors.ENDC)
                     executor._threads.clear()
                     concurrent.futures.thread._threads_queues.clear()
                     break

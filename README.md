@@ -34,17 +34,18 @@ Simple program to increase YouTube views written in Python.
 # Requirements
  * Python 3.x
  * High speed Internet Connection
- * Good proxy list
+ * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
  
 # New feature
- Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.
- Put keyword and title like this format `keyword : video title` in **search.txt** 
+ Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
+ 
+ For example `truss 101 : Analysis of Truss Structures Using Truss 101 Software`. If I search on YouTube **truss 101**, returned results shows my video. So here **truss 101** is the keyword and **Analysis of Truss Structures Using Truss 101 Software** is the video title.
 
 # Windows
 * ## Binary Release
 
-  For windows you can download binary releases from **[Binary releases](https://github.com/MShawon/YouTube-Viewer/releases)** or you can install from source. To do so keep reading. 
+  For windows you can download binary releases from **[Binary releases](https://github.com/MShawon/YouTube-Viewer/releases)** or you can install it from source. To do so keep reading. 
   
 * ## Installation 
  

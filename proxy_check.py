@@ -75,14 +75,11 @@ def load_proxy():
     return proxy_list
 
 
-def proxyCheck(position):
-
-    PROXY = proxy_list[position]
+def mainChecker(type1, type2, proxy, position):
 
     proxyDict = {
-        "http": "http://"+PROXY,
-        "https": "https://"+PROXY,
-        "ftp": "ftp://"+PROXY,
+        "http": f"{type1}://"+proxy,
+        "https": f"{type2}://"+proxy,
     }
 
     # print(proxyDict)
@@ -101,14 +98,25 @@ def proxyCheck(position):
         status = response.status_code
 
         print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
-              ' {} GOOD | Response : {}'.format(PROXY, status) + bcolors.ENDC)
+              ' {} | GOOD | Type : {} | Response : {}'.format(proxy,type2, status) + bcolors.ENDC)
 
-        print(PROXY, file=open('GoodProxy.txt', 'a'))
+        print(proxy, file=open('GoodProxy.txt', 'a'))
 
     except:
         print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.FAIL +
-              ' {} BAD '.format(PROXY) + bcolors.ENDC)
+              ' {} | BAD '.format(proxy) + bcolors.ENDC)
         pass
+
+
+
+
+def proxyCheck(position):
+
+    PROXY = proxy_list[position]
+
+    mainChecker('http','https', PROXY, position)
+    mainChecker('socks4','socks4', PROXY, position)
+    mainChecker('socks5','socks5', PROXY, position)
 
 
 def main():
