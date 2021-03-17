@@ -37,6 +37,9 @@ Simple program to increase YouTube views written in Python.
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
  
+# Rotating Proxy
+ If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py`. However, I can't guarantee that using rotating proxies will resolve view decrease issue. 
+
 # New feature
  Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
  
