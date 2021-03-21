@@ -26,8 +26,7 @@ Simple program to increase YouTube views written in Python.
 **Discalimer:** This has been developed for educational purposes only.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
-# Risks
- Something new came up https://github.com/MShawon/YouTube-Viewer/issues/40 . Please use at your own risk.
+
 # Issues
  Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer from issues first. If your problem isn't there, feel free to open an issue.
 
