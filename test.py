@@ -35,7 +35,8 @@ try:
     print("First url : {}".format(urls[0]))
 
     options = webdriver.ChromeOptions()
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    options.add_experimental_option("excludeSwitches", ["enable-automation","enable-logging"])
+    options.add_experimental_option('useAutomationExtension', False)
     options.headless = False
     options.add_argument("--log-level=3")
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {

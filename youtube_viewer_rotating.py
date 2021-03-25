@@ -30,9 +30,9 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import requests
 from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
+from selenium.common.exceptions import ElementNotInteractableException,NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -69,16 +69,17 @@ Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
 print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
+print(bcolors.OKCYAN + """
+This version has been developed for a project supporter named Anthony Tortolani.
+""" + bcolors.ENDC)
 
 print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
 
 try:
     ua = UserAgent(use_cache_server=False, verify_ssl=False)
 except UserAgentError:
-    agent_link = 'https://gist.githubusercontent.com/pzb/b4b6f57144aea7827ae4/raw/cf847b76a142955b1410c8bcef3aabe221a63db1/user-agents.txt'
-    response = requests.get(agent_link).content
-    ua = response.decode().split('\n')
-    ua = list(filter(None, ua))
+    ua = UserAgent(use_cache_server=True, verify_ssl=False)
+
 
 PROXY = None
 driver = None
@@ -124,6 +125,23 @@ def load_search():
     return search
 
 
+def bypassAgree(driver):
+    frame = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+        (By.ID, "iframe")))
+    driver._switch_to.frame(frame)
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+        (By.ID, "introAgreeButton"))).click()
+    driver.switch_to.default_content()
+
+
+def bypassSignIn(driver):
+    nothanks = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+        (By.CLASS_NAME, "style-scope.yt-button-renderer.style-text.size-small")))
+    nothanks.click()
+    time.sleep(random.randint(1,5))
+    bypassAgree(driver)
+
+
 def sleeping():
     time.sleep(30)
 
@@ -135,11 +153,9 @@ def viewVideo(position):
         without opening any chrome instances.
         '''
 
-        try:
-            agent = ua.random
-        except:
-            agent = random.choice(ua)
-
+        agent = ua.chrome
+        while OSNAME not in agent:
+            agent = ua.chrome
             
         print(bcolors.OKBLUE + "Tried {} |".format(position) +
                 bcolors.OKGREEN + '{} --> Searching for videos...'.format(PROXY) + bcolors.ENDC)
@@ -153,10 +169,12 @@ def viewVideo(position):
             url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
 
         options = webdriver.ChromeOptions()
-        options.add_experimental_option(
-            'excludeSwitches', ['enable-logging'])
-        options.headless = True
+        options.headless = background
+        viewport = ['2560,1440','1920,1080','1440,900','1536,864','1366,768','1280,1024','1024,768']
+        options.add_argument(f"--window-size={random.choice(viewport)}")
         options.add_argument("--log-level=3")
+        options.add_experimental_option("excludeSwitches", ["enable-automation","enable-logging"])
+        options.add_experimental_option('useAutomationExtension', False)
         options.add_argument("user-agent={}".format(agent))
         webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
             'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
@@ -171,24 +189,41 @@ def viewVideo(position):
             executable_path=driver_path, options=options)
 
         # For testing purposes to see if ip actually changes
-        # To see the result...edit line 161 options.headless = False
-        # and uncomment following these two lines
+        # To see the result uncomment following these two lines
 
         #driver.get('https://ipof.me/')
         #time.sleep(30)
 
-
         driver.get(url)
 
-        if method == 1:
-            play = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
-            play.send_keys(Keys.ENTER)
+        try:
+            if method == 1:
+                play = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
+                play.send_keys(Keys.ENTER)
 
-        else:
-            find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-                (By.XPATH, f'//*[@title="{query[1]}"]')))
-            find_video.click()
+            else:
+                find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
+                    (By.XPATH, f'//*[@title="{query[1]}"]')))
+                find_video.click()
+
+            bypassSignIn(driver)
+            
+        except ElementNotInteractableException:
+            try:
+                bypassSignIn(driver)
+            except ElementNotInteractableException:
+                bypassAgree(driver)
+
+        except NoSuchElementException:
+            driver.refresh()
+        except:
+            pass
+
+        try:
+            driver.find_element_by_css_selector('[title^="Pause (k)"]')
+        except:
+            driver.find_element_by_css_selector('[title^="Play (k)"]').click()
 
         try:
             video_len = duration_dict[url]
@@ -208,6 +243,11 @@ def viewVideo(position):
         duration = time.strftime("%Hh:%Mm:%Ss", time.gmtime(video_len))
         print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
                 ' {} --> Video Found : {} | Watch Duration : {} '.format(PROXY, url, duration) + bcolors.ENDC)
+        
+        try:
+            driver.find_element_by_css_selector('[title^="Pause (k)"]')
+        except:
+            bypassSignIn(driver)
 
         time.sleep(video_len)
         driver.quit()
@@ -220,7 +260,6 @@ def viewVideo(position):
         print(bcolors.FAIL + "Tried {} |".format(position) +
                 str(e) + bcolors.ENDC)
         driver.quit()
-
         pass
 
 
@@ -254,6 +293,8 @@ if __name__ == '__main__':
         driver_path = 'chromedriver_win32/chromedriver.exe'
     elif OSNAME == 'Linux':
         driver_path = 'chromedriver_linux64/chromedriver'
+    elif OSNAME == 'Darwin':
+        driver_path = 'chromedriver_mac64/chromedriver'
     else:
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
@@ -263,16 +304,25 @@ if __name__ == '__main__':
 
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
-    threads = int(
-        input(bcolors.OKBLUE+'Threads (recommended = 10): ' + bcolors.ENDC))
+    gui = str(input(
+        bcolors.WARNING + 'Do you want to run in headless(background) mode? (recommended=No) [No/yes] : ' + bcolors.ENDC)).lower()
+
+    if gui == 'n' or gui == 'no' or gui == '':
+        background = False
+        threads = int(
+            input(bcolors.OKBLUE+'Threads (recommended = 5): ' + bcolors.ENDC))
+    else:
+        background = True
+        threads = int(
+            input(bcolors.OKBLUE+'Threads (recommended = 10): ' + bcolors.ENDC))
 
     PROXY = input(bcolors.WARNING + 'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
 
-    check = 0
+    check = -1
     while len(view) < views:
         try:
             check += 1
-            if check == 1:
+            if check == 0:
                 main()
             else:
                 sleeping()

@@ -57,11 +57,10 @@ except UserAgentError:
     ua = response.decode().split('\n')
     ua = list(filter(None, ua))
 
-proxy_list = []
-
+checked = {}
 
 def load_proxy():
-    global proxy_list
+    proxies = []
 
     filename = input(bcolors.OKBLUE +
                      'Enter your proxy file name: ' + bcolors.ENDC)
@@ -70,12 +69,14 @@ def load_proxy():
     load.close()
 
     for lines in loaded:
-        proxy_list.append(lines)
+        proxies.append(lines)
 
-    return proxy_list
+    return proxies
 
 
 def mainChecker(type1, type2, proxy, position):
+
+    checked[position] = None
 
     proxyDict = {
         "http": f"{type1}://"+proxy,
@@ -104,7 +105,8 @@ def mainChecker(type1, type2, proxy, position):
 
     except:
         print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.FAIL +
-              ' {} | BAD '.format(proxy) + bcolors.ENDC)
+              ' {} | {} |BAD '.format(proxy, type2) + bcolors.ENDC)
+        checked[position] = type2      
         pass
 
 
@@ -115,8 +117,10 @@ def proxyCheck(position):
     PROXY = proxy_list[position]
 
     mainChecker('http','https', PROXY, position)
-    mainChecker('socks4','socks4', PROXY, position)
-    mainChecker('socks5','socks5', PROXY, position)
+    if checked[position] == 'https':
+        mainChecker('socks4','socks4', PROXY, position)
+    if checked[position] == 'socks4':
+        mainChecker('socks5','socks5', PROXY, position)
 
 
 def main():
@@ -140,8 +144,10 @@ if __name__ == '__main__':
     threads = int(
         input(bcolors.OKBLUE+'Threads (recommended = 100): ' + bcolors.ENDC))
 
-    load_proxy()
-    proxy_list = list(set(proxy_list))
+    proxy_list = load_proxy()
+    proxy_list = list(set(proxy_list))  # removing duplicate proxies
+    proxy_list = list(filter(None, proxy_list))  # removing empty proxies
+
     total_proxies = len(proxy_list)
     print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
 

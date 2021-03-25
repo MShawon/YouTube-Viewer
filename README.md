@@ -1,6 +1,6 @@
 <p align="center">
 <img alt="ViewCount" src="https://views.whatilearened.today/views/github/MShawon/YouTube-Viewer.svg">
-<img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux-success">
+<img alt="OS" src="https://img.shields.io/badge/OS-Windows%20/%20Linux / Mac-success">
 <a href="https://github.com/MShawon/YouTube-Viewer/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/MShawon/YouTube-Viewer/total?label=Downloads&color=success"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aclosed"><img alt="Closed issues" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aopen"><img alt="Open issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
@@ -27,6 +27,9 @@ Simple program to increase YouTube views written in Python.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
+# View Decrease
+ If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
+
 # Issues
  Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer from issues first. If your problem isn't there, feel free to open an issue.
 
@@ -39,7 +42,7 @@ Simple program to increase YouTube views written in Python.
 # Rotating Proxy
  If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py`. However, I can't guarantee that using rotating proxies will resolve view decrease issue. 
 
-# New feature
+# Search.txt
  Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
  
  For example `truss 101 : Analysis of Truss Structures Using Truss 101 Software`. If I search on YouTube **truss 101**, returned results shows my video. So here **truss 101** is the keyword and **Analysis of Truss Structures Using Truss 101 Software** is the video title.
@@ -59,6 +62,8 @@ Simple program to increase YouTube views written in Python.
 
   $ pip install -r requirements.txt
   ```
+  If something goes wrong, try again after installing latest version pip.
+
 * ## Important
    * Check your Google Chrome version and download same version **chromedriver.exe** from https://chromedriver.chromium.org/downloads here and place it in the **chromedriver_win32** folder.
 
@@ -69,11 +74,6 @@ Simple program to increase YouTube views written in Python.
 
    * After closing program, if chromedrivers are still running. You may want to double click **killdrive.bat** to close all chrome instances.
 
-* ## Test
-  This will clear your confusion as main program will run in the background.
-   ```
-   $ python test.py
-   ``` 
 
 * ## Usage
    * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
@@ -98,6 +98,8 @@ Simple program to increase YouTube views written in Python.
 
   $ pip3 install -r requirements.txt
   ```
+  If something goes wrong, try again after installing latest version pip.
+
 * ## Important
    * Check your Google Chrome version and download same version **chromedriver** from https://chromedriver.chromium.org/downloads here and place it in the  **chromedriver_linux64** folder.
 
@@ -110,11 +112,6 @@ Simple program to increase YouTube views written in Python.
       ```
       ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9
       ```
-* ## Test
-  This will clear your confusion as main program will run in the background.
-   ```
-   $ python3 test.py
-   ``` 
 
 * ## Usage
    * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
@@ -128,3 +125,5 @@ Simple program to increase YouTube views written in Python.
 
    ![alt text](demo_linux.png "Demo Linux")
 
+# Mac OS
+Same as Linux except the chromedriver is in **chromedriver_mac64** folder.
