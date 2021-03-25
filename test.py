@@ -14,6 +14,8 @@ if OSNAME == 'Windows':
     driver_path = 'chromedriver_win32/chromedriver.exe'
 elif OSNAME == 'Linux':
     driver_path = 'chromedriver_linux64/chromedriver'
+elif OSNAME == 'Darwin':
+    driver_path = 'chromedriver_mac64/chromedriver'
 else:
     print('{} OS is not supported.'.format(OSNAME))
     exit()
