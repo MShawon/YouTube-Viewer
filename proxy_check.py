@@ -1,6 +1,29 @@
+"""
+MIT License
+
+Copyright (c) 2021 MShawon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import concurrent.futures.thread
 import os
-import random
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -52,10 +75,7 @@ except:
 try:
     ua = UserAgent(use_cache_server=False, verify_ssl=False)
 except UserAgentError:
-    agent_link = 'https://gist.githubusercontent.com/pzb/b4b6f57144aea7827ae4/raw/cf847b76a142955b1410c8bcef3aabe221a63db1/user-agents.txt'
-    response = requests.get(agent_link).content
-    ua = response.decode().split('\n')
-    ua = list(filter(None, ua))
+    ua = UserAgent(path='fake_useragent_0.1.11.json')
 
 checked = {}
 
@@ -85,10 +105,7 @@ def mainChecker(type1, type2, proxy, position):
 
     # print(proxyDict)
     try:
-        try:
-            agent = ua.random
-        except:
-            agent = random.choice(ua)
+        agent = ua.random
 
         headers = {
             'User-Agent': '{}'.format(agent),
@@ -108,8 +125,6 @@ def mainChecker(type1, type2, proxy, position):
               ' {} | {} |BAD '.format(proxy, type2) + bcolors.ENDC)
         checked[position] = type2      
         pass
-
-
 
 
 def proxyCheck(position):

@@ -76,7 +76,7 @@ print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
 try:
     ua = UserAgent(use_cache_server=False, verify_ssl=False)
 except UserAgentError:
-    ua = UserAgent(use_cache_server=True, verify_ssl=False)
+    ua = UserAgent(path='fake_useragent_0.1.11.json')
 
 
 PROXY = None
@@ -361,6 +361,7 @@ if __name__ == '__main__':
         driver_path = 'chromedriver_linux64/chromedriver'
     elif OSNAME == 'Darwin':
         driver_path = 'chromedriver_mac64/chromedriver'
+        OSNAME = 'Macintosh'
     else:
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
