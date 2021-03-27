@@ -27,6 +27,9 @@ Simple program to increase YouTube views written in Python.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
+# Testing
+ Please don't make test on the provided urls.txt and search.txt. Test on your own video. I can't compare results from my testing while everyone is testing on my video.
+
 # View Decrease
  If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
 
