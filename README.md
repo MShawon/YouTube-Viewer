@@ -23,7 +23,7 @@
 # YouTube Viewer
 Simple program to increase YouTube views written in Python.
 
-**Discalimer:** This has been developed for educational purposes only.
+**Disclaimer:** This has been developed for educational purposes only.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
