@@ -31,8 +31,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fake_useragent import UserAgent, UserAgentError
-from selenium import webdriver
-from selenium.common.exceptions import ElementNotInteractableException,NoSuchElementException
+from seleniumwire import webdriver
+from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -69,10 +69,7 @@ Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
 print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
-print(bcolors.OKCYAN + """
-This version has been developed for a project supporter named Anthony Tortolani.
-""" + bcolors.ENDC)
-
+print(bcolors.OKGREEN+ 'Proxy with Authentication Edition\n' +bcolors.ENDC)
 print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
 
 try:
@@ -88,7 +85,6 @@ driver_path = None
 
 view = []
 duration_dict = {}
-
 
 def load_url():
     links = []
@@ -125,6 +121,21 @@ def load_search():
     return search
 
 
+def load_proxy():
+    proxies = []
+
+    filename = input(bcolors.OKBLUE +
+                     'Enter your proxy file name: ' + bcolors.ENDC)
+    load = open(filename)
+    loaded = [items.rstrip().strip() for items in load]
+    load.close()
+
+    for lines in loaded:
+        proxies.append(lines)
+
+    return proxies
+
+
 def bypassAgree(driver):
     frame = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.ID, "iframe")))
@@ -148,12 +159,13 @@ def sleeping():
 
 def viewVideo(position):
     try:
-        
+        PROXY = proxy_list[position]
+
         agent = ua.chrome
         while OSNAME not in agent:
             agent = ua.chrome
-            
-        print(bcolors.OKBLUE + "Tried {} |".format(position) +
+
+        print(bcolors.OKBLUE + "Tried {} | ".format(position) +
                 bcolors.OKGREEN + '{} --> Searching for videos...'.format(PROXY) + bcolors.ENDC)
 
         if position % 2:
@@ -174,21 +186,26 @@ def viewVideo(position):
         options.add_argument("user-agent={}".format(agent))
         webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
             'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
-        webdriver.DesiredCapabilities.CHROME['proxy'] = {
-            "httpProxy": PROXY,
-            "sslProxy": PROXY,
-
-            "proxyType": "MANUAL",
+        sw_options = {
+            'disable_capture': True  # Pass all requests straight through
         }
 
+        if proxy_type == 'https':
+            sw_options = {
+                'proxy': {
+                    'https': f'https://{PROXY}',
+                }
+            }
+        else:
+            sw_options = {
+                'proxy': {
+                    'http': f'socks5://{PROXY}',
+                    'https': f'socks5://{PROXY}',
+                }
+            }
+
         driver = webdriver.Chrome(
-            executable_path=driver_path, options=options)
-
-        # For testing purposes to see if ip actually changes
-        # To see the result uncomment following these two lines
-
-        #driver.get('https://ipof.me/')
-        #time.sleep(30)
+            executable_path=driver_path, options=options, seleniumwire_options=sw_options)
 
         driver.get(url)
 
@@ -204,7 +221,7 @@ def viewVideo(position):
                 find_video.click()
 
             bypassSignIn(driver)
-            
+
         except ElementNotInteractableException:
             try:
                 bypassSignIn(driver)
@@ -213,6 +230,7 @@ def viewVideo(position):
 
         except NoSuchElementException:
             driver.refresh()
+
         except:
             pass
 
@@ -226,7 +244,7 @@ def viewVideo(position):
         except KeyError:
             WebDriverWait(driver, 80).until(
                 EC.element_to_be_clickable((By.ID, 'movie_player')))
-                
+
             video_len = driver.execute_script(
                 "return document.getElementById('movie_player').getDuration()")
 
@@ -239,12 +257,12 @@ def viewVideo(position):
         duration = time.strftime("%Hh:%Mm:%Ss", time.gmtime(video_len))
         print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
                 ' {} --> Video Found : {} | Watch Duration : {} '.format(PROXY, url, duration) + bcolors.ENDC)
-        
+
         try:
             driver.find_element_by_css_selector('[title^="Pause (k)"]')
         except:
             bypassSignIn(driver)
-
+        
         time.sleep(video_len)
         driver.quit()
 
@@ -259,9 +277,8 @@ def viewVideo(position):
         pass
 
 
-
 def main():
-    pool_number = [i for i in range(100000)]
+    pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = [executor.submit(viewVideo, position)
@@ -313,7 +330,23 @@ if __name__ == '__main__':
         threads = int(
             input(bcolors.OKBLUE+'Threads (recommended = 10): ' + bcolors.ENDC))
 
-    PROXY = input(bcolors.WARNING + 'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
+    handle_proxy = str(input(
+        bcolors.WARNING + "Select proxy type (HTTPS / SOCKS5) [1/2] : " + bcolors.ENDC)).lower()
+
+    if handle_proxy == '1' or handle_proxy == 'https':
+        proxy_type = 'https'
+    elif handle_proxy == '2' or handle_proxy == 'socks5' or handle_proxy == 'socks':
+        proxy_type = 'socks5'
+    else:
+        print('Input 1 for HTTPS or input 2 for SOCKS5 proxy type')
+        sys.exit()
+
+    proxy_list = load_proxy()
+    proxy_list = list(set(proxy_list))  # removing duplicate proxies
+    proxy_list = list(filter(None, proxy_list))  # removing empty proxies
+    print(proxy_list)
+    total_proxies = len(proxy_list)
+    print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
 
     check = -1
     while len(view) < views:

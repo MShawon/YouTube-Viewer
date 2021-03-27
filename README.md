@@ -41,12 +41,19 @@ Simple program to increase YouTube views written in Python.
  * High speed Internet Connection
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
- 
-# Rotating Proxy
- If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py`. However, I can't guarantee that using rotating proxies will resolve view decrease issue. 
+
+# Proxies
+* ## Free Proxy
+   Try not to use free proxies. `youtube_viewer.py` is the script for free proxies.
+
+* ## Premium Proxy
+   HTTPS or SOCKS5 proxies with authentication can also be done. To do so put your proxies in this format `username:password@ipaddress:port` in a text file. Every single line will contain a single proxy. Use `youtube_viewer_premium.py` script instead of `youtube_viewer.py` and provide your text file path when script asks for proxy file name.
+
+* ## Rotating Proxy
+   If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py` and provide your Proxy service Main Gateway. 
 
 # Search.txt
- Now program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
+  Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
  
  For example `truss 101 : Analysis of Truss Structures Using Truss 101 Software`. If I search on YouTube **truss 101**, returned results shows my video. So here **truss 101** is the keyword and **Analysis of Truss Structures Using Truss 101 Software** is the video title.
 
