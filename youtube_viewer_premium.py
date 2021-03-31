@@ -344,7 +344,7 @@ if __name__ == '__main__':
     proxy_list = load_proxy()
     proxy_list = list(set(proxy_list))  # removing duplicate proxies
     proxy_list = list(filter(None, proxy_list))  # removing empty proxies
-    print(proxy_list)
+
     total_proxies = len(proxy_list)
     print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
 

@@ -49,7 +49,12 @@ Simple program to increase YouTube views written in Python.
 * ## Rotating Proxy
    If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py` and provide your Proxy service Main Gateway. 
 
-# Search.txt
+# Urls
+  Put video links in the urls.txt. For multiple videos place urls in multple lines.
+  1) To find video link in YouTube click share and copy.
+  2) If you have any external link which will redirect to your youtube video you can use that too. Example : when you post a YouTube video link in **twitter** and you hit play on twitter, you will get a link like this `https://t.co/xxxxxxxxxx?amp=1`. This is helpful because YouTube will see that views are coming from External Source like twitter in this example.
+
+# Search
   Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
 
 # Windows
@@ -81,14 +86,11 @@ Simple program to increase YouTube views written in Python.
 
 
 * ## Usage
-   * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
    * Open command prompt in YouTube-Viewer folder and run
         ```
         $ python youtube_viewer.py
         ```
-   * Enter amount of views you want.
-   * Provide number of threads. 
-   * Input proxy list or let program to handle proxies automatically.
+   * Rest is self explanatory.
 
     ![alt text](demo_windows.png "Demo Windows")
 
@@ -119,16 +121,16 @@ Simple program to increase YouTube views written in Python.
       ```
 
 * ## Usage
-   * Put youtube video links in the urls.txt. For multiple videos place urls in multple lines. (To find video link in YouTube click share and copy)
    * Open command prompt in YouTube-Viewer folder and run
         ```
         $ python3 youtube_viewer.py
         ```
-   * Enter amount of views you want.
-   * Provide number of threads. 
-   * Input proxy list or let program to handle proxies automatically.
+   * Rest is self explanatory.
 
    ![alt text](demo_linux.png "Demo Linux")
 
 # Mac OS
 Same as Linux except the chromedriver is in **chromedriver_mac64** folder.
+
+# Credits
+I want to thank all of you who have opened an issue or shared your ideas with me! 
