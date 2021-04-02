@@ -34,10 +34,11 @@ Simple program to increase YouTube views written in Python.
  Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer from issues first. If your problem isn't there, feel free to open an issue.
 
 # Requirements
- * Python 3.x
+ * Python 3.6+
  * High speed Internet Connection
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
+ * Chrome driver will be downloaded automatically by undetected-chromedriver
 
 # Proxies
 * ## Free Proxy
@@ -75,8 +76,6 @@ Simple program to increase YouTube views written in Python.
   If something goes wrong, try again after installing latest version pip.
 
 * ## Important
-   * Check your Google Chrome version and download same version **chromedriver.exe** from https://chromedriver.chromium.org/downloads here and place it in the **chromedriver_win32** folder.
-
    * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
       ```
       $ python proxy_check.py
@@ -94,7 +93,7 @@ Simple program to increase YouTube views written in Python.
 
     ![alt text](demo_windows.png "Demo Windows")
 
-# Linux
+# Linux / Mac
 * ## Installation 
  
   Open your favourite terminal and run
@@ -108,8 +107,6 @@ Simple program to increase YouTube views written in Python.
   If something goes wrong, try again after installing latest version pip.
 
 * ## Important
-   * Check your Google Chrome version and download same version **chromedriver** from https://chromedriver.chromium.org/downloads here and place it in the  **chromedriver_linux64** folder.
-
    * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
         ```
         $ python3 proxy_check.py
@@ -128,9 +125,6 @@ Simple program to increase YouTube views written in Python.
    * Rest is self explanatory.
 
    ![alt text](demo_linux.png "Demo Linux")
-
-# Mac OS
-Same as Linux except the chromedriver is in **chromedriver_mac64** folder.
 
 # Credits
 I want to thank all of you who have opened an issue or shared your ideas with me! 

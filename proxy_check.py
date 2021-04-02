@@ -44,6 +44,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 print(bcolors.OKGREEN + """
   ____                                    
  |  _ \ _ __ _____  ___   _               
@@ -79,6 +80,7 @@ except UserAgentError:
 
 checked = {}
 
+
 def load_proxy():
     proxies = []
 
@@ -108,22 +110,22 @@ def mainChecker(type1, type2, proxy, position):
         agent = ua.random
 
         headers = {
-            'User-Agent': '{}'.format(agent),
+            'User-Agent': f'{agent}',
         }
 
         response = requests.get(
             'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
         status = response.status_code
 
-        print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
-              ' {} | GOOD | Type : {} | Response : {}'.format(proxy,type2, status) + bcolors.ENDC)
+        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.OKGREEN +
+              f' {proxy} | GOOD | Type : {type2} | Response : {status}' + bcolors.ENDC)
 
         print(proxy, file=open('GoodProxy.txt', 'a'))
 
     except:
-        print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.FAIL +
-              ' {} | {} |BAD '.format(proxy, type2) + bcolors.ENDC)
-        checked[position] = type2      
+        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.FAIL +
+              f' {proxy} | {type2} |BAD ' + bcolors.ENDC)
+        checked[position] = type2
         pass
 
 
@@ -131,11 +133,11 @@ def proxyCheck(position):
 
     PROXY = proxy_list[position]
 
-    mainChecker('http','https', PROXY, position)
+    mainChecker('http', 'https', PROXY, position)
     if checked[position] == 'https':
-        mainChecker('socks4','socks4', PROXY, position)
+        mainChecker('socks4', 'socks4', PROXY, position)
     if checked[position] == 'socks4':
-        mainChecker('socks5','socks5', PROXY, position)
+        mainChecker('socks5', 'socks5', PROXY, position)
 
 
 def main():
@@ -152,8 +154,9 @@ def main():
             executor._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
         except IndexError:
-            print(bcolors.WARNING+ 'Number of proxies are less than threads. Provide more proxies or less threads.' +bcolors.ENDC)
+            print(bcolors.WARNING + 'Number of proxies are less than threads. Provide more proxies or less threads.' + bcolors.ENDC)
             pass
+
 
 if __name__ == '__main__':
     threads = int(
@@ -164,6 +167,6 @@ if __name__ == '__main__':
     proxy_list = list(filter(None, proxy_list))  # removing empty proxies
 
     total_proxies = len(proxy_list)
-    print(bcolors.OKCYAN + 'Total proxies : {}'.format(total_proxies) + bcolors.ENDC)
+    print(bcolors.OKCYAN + f'Total proxies : {total_proxies}' + bcolors.ENDC)
 
     main()

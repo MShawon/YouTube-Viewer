@@ -30,16 +30,18 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import undetected_chromedriver as uc
 from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
-from selenium.common.exceptions import ElementNotInteractableException,NoSuchElementException
+from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-os.system("")
+uc.install()
 
+os.system("")
 
 class bcolors:
     HEADER = '\033[95m'
@@ -84,7 +86,6 @@ except UserAgentError:
 PROXY = None
 driver = None
 status = None
-driver_path = None
 
 view = []
 duration_dict = {}
@@ -102,7 +103,7 @@ def load_url():
         links.append(lines)
 
     print(bcolors.OKGREEN +
-          '{} url loaded from urls.txt'.format(len(links)) + bcolors.ENDC)
+          f'{len(links)} url loaded from urls.txt' + bcolors.ENDC)
 
     return links
 
@@ -120,7 +121,7 @@ def load_search():
         search.append(lines)
 
     print(bcolors.OKGREEN +
-          '{} query loaded from search.txt'.format(len(search)) + bcolors.ENDC)
+          f'{len(search)} query loaded from search.txt' + bcolors.ENDC)
 
     return search
 
@@ -138,7 +139,7 @@ def bypassSignIn(driver):
     nothanks = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CLASS_NAME, "style-scope.yt-button-renderer.style-text.size-small")))
     nothanks.click()
-    time.sleep(random.randint(1,5))
+    time.sleep(random.randint(1, 5))
     bypassAgree(driver)
 
 
@@ -148,13 +149,13 @@ def sleeping():
 
 def viewVideo(position):
     try:
-        
+
         agent = ua.chrome
         while OSNAME not in agent:
             agent = ua.chrome
-            
-        print(bcolors.OKBLUE + "Tried {} |".format(position) +
-                bcolors.OKGREEN + '{} --> Searching for videos...'.format(PROXY) + bcolors.ENDC)
+
+        print(bcolors.OKBLUE + f"Tried {position} |" +
+              bcolors.OKGREEN + f'{PROXY} --> Searching for videos...' + bcolors.ENDC)
 
         if position % 2:
             method = 1
@@ -166,12 +167,14 @@ def viewVideo(position):
 
         options = webdriver.ChromeOptions()
         options.headless = background
-        viewport = ['2560,1440','1920,1080','1440,900','1536,864','1366,768','1280,1024','1024,768']
+        viewport = ['2560,1440', '1920,1080', '1440,900',
+                    '1536,864', '1366,768', '1280,1024', '1024,768']
         options.add_argument(f"--window-size={random.choice(viewport)}")
         options.add_argument("--log-level=3")
-        options.add_experimental_option("excludeSwitches", ["enable-automation","enable-logging"])
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation", "enable-logging"])
         options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument("user-agent={}".format(agent))
+        options.add_argument(f"user-agent={agent}")
         webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
             'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
         webdriver.DesiredCapabilities.CHROME['proxy'] = {
@@ -181,14 +184,13 @@ def viewVideo(position):
             "proxyType": "MANUAL",
         }
 
-        driver = webdriver.Chrome(
-            executable_path=driver_path, options=options)
+        driver = webdriver.Chrome(options=options)
 
         # For testing purposes to see if ip actually changes
         # To see the result uncomment following these two lines
 
-        #driver.get('https://ipof.me/')
-        #time.sleep(30)
+        # driver.get('https://ipof.me/')
+        # time.sleep(30)
 
         driver.get(url)
 
@@ -204,7 +206,7 @@ def viewVideo(position):
                 find_video.click()
 
             bypassSignIn(driver)
-            
+
         except ElementNotInteractableException:
             try:
                 bypassSignIn(driver)
@@ -226,7 +228,7 @@ def viewVideo(position):
         except KeyError:
             WebDriverWait(driver, 80).until(
                 EC.element_to_be_clickable((By.ID, 'movie_player')))
-                
+
             video_len = driver.execute_script(
                 "return document.getElementById('movie_player').getDuration()")
 
@@ -237,9 +239,9 @@ def viewVideo(position):
         video_len = video_len*random.uniform(.85, .95)
 
         duration = time.strftime("%Hh:%Mm:%Ss", time.gmtime(video_len))
-        print(bcolors.OKBLUE + "Tried {} |".format(position) + bcolors.OKGREEN +
-                ' {} --> Video Found : {} | Watch Duration : {} '.format(PROXY, url, duration) + bcolors.ENDC)
-        
+        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.OKGREEN +
+              f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
+
         try:
             driver.find_element_by_css_selector('[title^="Pause (k)"]')
         except:
@@ -250,14 +252,13 @@ def viewVideo(position):
 
         view.append(position)
         print(bcolors.OKCYAN +
-                'View added : {}'.format(len(view)) + bcolors.ENDC)
+              f'View added : {len(view)}' + bcolors.ENDC)
 
     except Exception as e:
-        print(bcolors.FAIL + "Tried {} |".format(position) +
-                str(e) + bcolors.ENDC)
+        print(bcolors.FAIL + f"Tried {position} |" +
+              str(e) + bcolors.ENDC)
         driver.quit()
         pass
-
 
 
 def main():
@@ -271,7 +272,7 @@ def main():
             for future in as_completed(futures):
                 if len(view) == views:
                     print(
-                        bcolors.WARNING + 'Amount of views added : {} | Stopping program...But this can take some time to close all threads.'.format(views) + bcolors.ENDC)
+                        bcolors.WARNING + f'Amount of views added : {views} | Stopping program...But this can take some time to close all threads.' + bcolors.ENDC)
                     executor._threads.clear()
                     concurrent.futures.thread._threads_queues.clear()
                     break
@@ -285,16 +286,8 @@ def main():
 if __name__ == '__main__':
 
     OSNAME = platform.system()
-    if OSNAME == 'Windows':
-        driver_path = 'chromedriver_win32/chromedriver.exe'
-    elif OSNAME == 'Linux':
-        driver_path = 'chromedriver_linux64/chromedriver'
-    elif OSNAME == 'Darwin':
-        driver_path = 'chromedriver_mac64/chromedriver'
+    if OSNAME == 'Darwin':
         OSNAME = 'Macintosh'
-    else:
-        print('{} OS is not supported.'.format(OSNAME))
-        sys.exit()
 
     urls = load_url()
     queries = load_search()
@@ -313,7 +306,8 @@ if __name__ == '__main__':
         threads = int(
             input(bcolors.OKBLUE+'Threads (recommended = 10): ' + bcolors.ENDC))
 
-    PROXY = input(bcolors.WARNING + 'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
+    PROXY = input(bcolors.WARNING +
+                  'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
 
     check = -1
     while len(view) < views:
@@ -324,7 +318,7 @@ if __name__ == '__main__':
             else:
                 sleeping()
                 print(bcolors.WARNING +
-                      'Total Checked : {} times'.format(check) + bcolors.ENDC)
+                      f'Total Checked : {check} times' + bcolors.ENDC)
                 main()
         except KeyboardInterrupt:
             sys.exit()
