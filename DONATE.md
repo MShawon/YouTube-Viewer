@@ -1,4 +1,4 @@
-# Thank you for supporting me with your hard-earned money!
+# Thank you!
 ## PayPal
 https://paypal.me/mshawon1
 
@@ -10,9 +10,3 @@ https://paypal.me/mshawon1
 
 ## LTC
 `LSDuLLGsX59jtHr65QyVfXWWBAp5Jbz7L7`
-
-## XMR
-`44j73rYxS9c5ZRVdF65zNf2AYp2qBELid6P1NuefKnEsHQbasMah2KJaKLMykrchD75HxrsrZCX7dDEzj4cUo78AAN3GrZ4`
-
-## BTG
-`GHvbihGbnxHwaqSqkWy76mjnvcy6eFwRRE`
