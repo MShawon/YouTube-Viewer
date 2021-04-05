@@ -5,10 +5,7 @@
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aclosed"><img alt="Closed issues" src="https://img.shields.io/github/issues-closed/MShawon/YouTube-Viewer.svg"></a>
 <a href="https://github.com/MShawon/YouTube-Viewer/issues?q=is%3Aissue+is%3Aopen"><img alt="Open issues" src="https://img.shields.io/github/issues/MShawon/YouTube-Viewer"></a>
 </p>
-<p align="center">
-<a href="https://github.com/MShawon/YouTube-Viewer/blob/master/DONATE.md"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal / Crypto-green.svg"></a>
-<a href="https://github.com/MShawon/github-clone-count-badge"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://github.com/MShawon/YouTube-Viewer/blob/master/clone.json?raw=True&logo=github"></a>
-</p>
+
 
     Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
      YbdP  dP   Yb 88   88   88   88   88 88__dP 88__   
@@ -126,5 +123,9 @@ Simple program to increase YouTube views written in Python.
 
    ![alt text](demo_linux.png "Demo Linux")
 
+# Donation
+ **BTC**
+ `1Jh8KZ6khuHayNDeVV9tEzYSq9FPExKCAH`
+ 
 # Credits
 I want to thank all of you who have opened an issue or shared your ideas with me! 
