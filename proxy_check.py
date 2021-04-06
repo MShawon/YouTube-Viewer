@@ -117,13 +117,13 @@ def mainChecker(type1, type2, proxy, position):
             'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
         status = response.status_code
 
-        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.OKGREEN +
+        print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
               f' {proxy} | GOOD | Type : {type2} | Response : {status}' + bcolors.ENDC)
 
         print(proxy, file=open('GoodProxy.txt', 'a'))
 
     except:
-        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.FAIL +
+        print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.FAIL +
               f' {proxy} | {type2} |BAD ' + bcolors.ENDC)
         checked[position] = type2
         pass

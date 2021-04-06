@@ -25,15 +25,16 @@ SOFTWARE.
 import concurrent.futures.thread
 import os
 import platform
-import random
 import sys
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from random import choice, randint, uniform
+from time import gmtime, sleep, strftime
 
 import undetected_chromedriver as uc
 from fake_useragent import UserAgent, UserAgentError
 from selenium import webdriver
-from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
+from selenium.common.exceptions import (ElementClickInterceptedException,
+                                        ElementNotInteractableException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -136,15 +137,33 @@ def bypassAgree(driver):
 
 
 def bypassSignIn(driver):
+    sleep(1)
     nothanks = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CLASS_NAME, "style-scope.yt-button-renderer.style-text.size-small")))
     nothanks.click()
-    time.sleep(random.randint(1, 5))
+    sleep(randint(1, 5))
     bypassAgree(driver)
 
 
 def sleeping():
-    time.sleep(30)
+    sleep(30)
+
+
+def searchVideo(driver, query):
+    find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
+        (By.XPATH, f'//*[@title="{query[1]}"]')))
+    find_video.click()
+
+
+def checkState(driver):
+    try:
+        driver.find_element_by_css_selector('[title^="Pause (k)"]')
+    except:
+        try:
+            driver.find_element_by_css_selector('[title^="Play (k)"]').click()
+        except:
+            driver.find_element_by_css_selector(
+                'button.ytp-large-play-button.ytp-button').send_keys(Keys.ENTER)
 
 
 def viewVideo(position):
@@ -154,22 +173,22 @@ def viewVideo(position):
         while OSNAME not in agent:
             agent = ua.chrome
 
-        print(bcolors.OKBLUE + f"Tried {position} |" +
+        print(bcolors.OKBLUE + f"Tried {position+1} |" +
               bcolors.OKGREEN + f'{PROXY} --> Searching for videos...' + bcolors.ENDC)
 
         if position % 2:
             method = 1
-            url = random.choice(urls)
+            url = choice(urls)
         else:
             method = 2
-            query = random.choice(queries)
+            query = choice(queries)
             url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
 
         options = webdriver.ChromeOptions()
         options.headless = background
         viewport = ['2560,1440', '1920,1080', '1440,900',
                     '1536,864', '1366,768', '1280,1024', '1024,768']
-        options.add_argument(f"--window-size={random.choice(viewport)}")
+        options.add_argument(f"--window-size={choice(viewport)}")
         options.add_argument("--log-level=3")
         options.add_experimental_option(
             "excludeSwitches", ["enable-automation", "enable-logging"])
@@ -190,9 +209,21 @@ def viewVideo(position):
         # To see the result uncomment following these two lines
 
         # driver.get('https://ipof.me/')
-        # time.sleep(30)
+        # sleep(30)
 
         driver.get(url)
+
+        try:
+            consent = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+                (By.XPATH, "//input[@type='submit' and @value='I agree']")))
+            consent.submit()
+        except:
+            try:
+                consent = driver.find_element_by_css_selector(
+                    'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
+                consent.click()
+            except:
+                pass
 
         try:
             if method == 1:
@@ -201,53 +232,52 @@ def viewVideo(position):
                 play.send_keys(Keys.ENTER)
 
             else:
-                find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-                    (By.XPATH, f'//*[@title="{query[1]}"]')))
-                find_video.click()
+                searchVideo(driver, query)
 
             bypassSignIn(driver)
 
         except ElementNotInteractableException:
             try:
                 bypassSignIn(driver)
-            except ElementNotInteractableException:
+            except ElementClickInterceptedException:
                 bypassAgree(driver)
+                searchVideo(driver, query)
+            except:
+                pass
 
-        except NoSuchElementException:
-            driver.refresh()
+        except ElementClickInterceptedException:
+            bypassAgree(driver)
+            searchVideo(driver, query)
+
         except:
             pass
 
-        try:
-            driver.find_element_by_css_selector('[title^="Pause (k)"]')
-        except:
-            driver.find_element_by_css_selector('[title^="Play (k)"]').click()
+        checkState(driver)
 
         try:
             video_len = duration_dict[url]
         except KeyError:
+            video_len = 0
             WebDriverWait(driver, 80).until(
                 EC.element_to_be_clickable((By.ID, 'movie_player')))
 
-            video_len = driver.execute_script(
-                "return document.getElementById('movie_player').getDuration()")
+            while video_len == 0:
+                video_len = driver.execute_script(
+                    "return document.getElementById('movie_player').getDuration()")
 
             duration_dict[url] = video_len
 
         # Randomizing watch duration between 85% to 95% of total video duration
         # to avoid pattern and youtube next suggested video
-        video_len = video_len*random.uniform(.85, .95)
+        video_len = video_len*uniform(.85, .95)
 
-        duration = time.strftime("%Hh:%Mm:%Ss", time.gmtime(video_len))
-        print(bcolors.OKBLUE + f"Tried {position} |" + bcolors.OKGREEN +
-              f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
+        duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
+        print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
+            f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
 
-        try:
-            driver.find_element_by_css_selector('[title^="Pause (k)"]')
-        except:
-            bypassSignIn(driver)
+        checkState(driver)
 
-        time.sleep(video_len)
+        sleep(video_len)
         driver.quit()
 
         view.append(position)
@@ -255,8 +285,9 @@ def viewVideo(position):
               f'View added : {len(view)}' + bcolors.ENDC)
 
     except Exception as e:
-        print(bcolors.FAIL + f"Tried {position} |" +
-              str(e) + bcolors.ENDC)
+        *_, exc_tb = sys.exc_info()
+        print(bcolors.FAIL + f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " +
+            str(e) + bcolors.ENDC)
         driver.quit()
         pass
 
@@ -272,7 +303,7 @@ def main():
             for future in as_completed(futures):
                 if len(view) == views:
                     print(
-                        bcolors.WARNING + f'Amount of views added : {views} | Stopping program...But this can take some time to close all threads.' + bcolors.ENDC)
+                        bcolors.WARNING + f'Amount of views added : {views} | Stopping program...' + bcolors.ENDC)
                     executor._threads.clear()
                     concurrent.futures.thread._threads_queues.clear()
                     break
