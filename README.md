@@ -42,13 +42,13 @@ Simple program to increase YouTube views written in Python.
 
 # Proxies
 * ## Free Proxy
-   Try not to use free proxies. `youtube_viewer.py` is the script for free proxies.
+   Try not to use free proxies.
 
 * ## Premium Proxy
-   HTTPS or SOCKS5 proxies with authentication can also be done. To do so put your proxies in this format `username:password@ipaddress:port` in a text file. Every single line will contain a single proxy. Use `youtube_viewer_premium.py` script instead of `youtube_viewer.py` and provide your text file path when script asks for proxy file name.
+   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when script asks for proxy file name.
 
 * ## Rotating Proxy
-   If you want to use rotating proxies service like storm proxies, use `youtube_viewer_rotating.py` instead of `youtube_viewer.py` and provide your Proxy service Main Gateway. 
+   You can also use rotating proxies service like webshare, storm proxies and so on. Make sure to authenticate your IP on their website and use the Main Gateway (ipaddress:port) they provide you.
 
 # Urls
   Put video links in the urls.txt. For multiple videos place urls in multple lines.

@@ -33,17 +33,18 @@ from time import gmtime, sleep, strftime
 import requests
 import undetected_chromedriver as uc
 from fake_useragent import UserAgent, UserAgentError
-from selenium import webdriver
 from selenium.common.exceptions import (ElementClickInterceptedException,
                                         ElementNotInteractableException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from seleniumwire import webdriver
 
 uc.install()
 
 os.system("")
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -143,7 +144,7 @@ def gather_proxy():
         proxy = output.split('\n')
         proxies = proxies + proxy
         print(bcolors.OKGREEN +
-              f'{proxy} proxies gathered from {link}' + bcolors.ENDC)
+              f'{len(proxy)} proxies gathered from {link}' + bcolors.ENDC)
 
     return proxies
 
@@ -163,7 +164,89 @@ def load_proxy():
     return proxies
 
 
-def bypassAgree(driver):
+def check_proxy(agent, PROXY, proxy_type):
+    if category == 'f':
+        headers = {
+            'User-Agent': f'{agent}',
+        }
+        if proxy_type == 'https':
+            proxyDict = {
+                "http": f"http://{PROXY}",
+                "https": f"https://{PROXY}",
+            }
+        else:
+            proxyDict = {
+                "http": f"{proxy_type}://{PROXY}",
+                "https": f"{proxy_type}://{PROXY}",
+            }
+        response = requests.get(
+            'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
+        status = response.status_code
+
+    else:
+        status = 200
+
+    return status
+
+
+def get_driver(agent, PROXY, proxy_type):
+    options = webdriver.ChromeOptions()
+    options.headless = background
+    viewport = ['2560,1440', '1920,1080', '1440,900',
+                '1536,864', '1366,768', '1280,1024', '1024,768']
+    options.add_argument(f"--window-size={choice(viewport)}")
+    options.add_argument("--log-level=3")
+    options.add_experimental_option(
+        "excludeSwitches", ["enable-automation", "enable-logging"])
+    options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument(f"user-agent={agent}")
+    webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
+        'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
+    sw_options = {
+        'disable_capture': True  # Pass all requests straight through
+    }
+
+    if proxy_type == 'https':
+        sw_options = {
+            'proxy': {
+                'http': f'http://{PROXY}',
+                'https': f'https://{PROXY}',
+            }
+        }
+    else:
+        sw_options = {
+            'proxy': {
+                'http': f'{proxy_type}://{PROXY}',
+                'https': f'{proxy_type}://{PROXY}',
+            }
+        }
+
+    driver = webdriver.Chrome(options=options, seleniumwire_options=sw_options)
+
+    return driver
+
+
+def bypass_consent(driver):
+    try:
+        consent = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+            (By.XPATH, "//input[@type='submit' and @value='I agree']")))
+        consent.submit()
+    except:
+        try:
+            consent = driver.find_element_by_css_selector(
+                'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
+            consent.click()
+        except:
+            pass
+
+
+def search_video(driver, query):
+    find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
+        (By.XPATH, f'//*[@title="{query[1]}"]')))
+    find_video.click()
+
+
+def bypass_agree(driver):
     frame = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.ID, "iframe")))
     driver._switch_to.frame(frame)
@@ -172,26 +255,16 @@ def bypassAgree(driver):
     driver.switch_to.default_content()
 
 
-def bypassSignIn(driver):
+def bypass_signin(driver):
     sleep(1)
     nothanks = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
         (By.CLASS_NAME, "style-scope.yt-button-renderer.style-text.size-small")))
     nothanks.click()
     sleep(randint(1, 5))
-    bypassAgree(driver)
+    bypass_agree(driver)
 
 
-def sleeping():
-    sleep(30)
-
-
-def searchVideo(driver, query):
-    find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-        (By.XPATH, f'//*[@title="{query[1]}"]')))
-    find_video.click()
-
-
-def checkState(driver):
+def check_state(driver):
     try:
         driver.find_element_by_css_selector('[title^="Pause (k)"]')
     except:
@@ -202,31 +275,25 @@ def checkState(driver):
                 'button.ytp-large-play-button.ytp-button').send_keys(Keys.ENTER)
 
 
-def mainViewer(type1, type2, PROXY, position):
+def sleeping():
+    sleep(30)
+
+
+def main_viewer(proxy_type, PROXY, position):
     try:
-        
+
         checked[position] = None
 
         agent = ua.chrome
         while OSNAME not in agent:
             agent = ua.chrome
 
-        headers = {
-            'User-Agent': f'{agent}',
-        }
-        proxyDict = {
-            "http": f"{type1}://"+PROXY,
-            "https": f"{type2}://"+PROXY,
-        }
-
-        response = requests.get(
-            'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
-        status = response.status_code
+        status = check_proxy(agent, PROXY, proxy_type)
 
         if status == 200:
             try:
                 print(bcolors.OKBLUE + f"Tried {position+1} |" +
-                      bcolors.OKGREEN + f'{PROXY} | {type2} --> Good Proxy | Searching for videos...' + bcolors.ENDC)
+                      bcolors.OKGREEN + f'{PROXY} | {proxy_type} --> Good Proxy | Searching for videos...' + bcolors.ENDC)
 
                 if position % 2:
                     method = 1
@@ -236,47 +303,12 @@ def mainViewer(type1, type2, PROXY, position):
                     query = choice(queries)
                     url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
 
-                options = webdriver.ChromeOptions()
-                options.headless = background
-                viewport = ['2560,1440', '1920,1080', '1440,900',
-                            '1536,864', '1366,768', '1280,1024', '1024,768']
-                options.add_argument(
-                    f"--window-size={choice(viewport)}")
-                options.add_argument("--log-level=3")
-                options.add_experimental_option(
-                    "excludeSwitches", ["enable-automation", "enable-logging"])
-                options.add_experimental_option(
-                    'useAutomationExtension', False)
-                options.add_argument(f"user-agent={agent}")
-                webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
-                    'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
-
-                if type1 == 'http':
-                    webdriver.DesiredCapabilities.CHROME['proxy'] = {
-                        "httpProxy": PROXY,
-                        "sslProxy": PROXY,
-
-                        "proxyType": "MANUAL",
-                    }
-                else:
-                    options.add_argument(f'--proxy-server={type1}://' + PROXY)
-
-                driver = webdriver.Chrome(options=options)
-
+                driver = get_driver(agent, PROXY, proxy_type)
+                
                 driver.get(url)
 
-                try:
-                    consent = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//input[@type='submit' and @value='I agree']")))
-                    consent.submit()
-                except:
-                    try:
-                        consent = driver.find_element_by_css_selector(
-                            'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
-                        consent.click()
-                    except:
-                        pass
-                    
+                bypass_consent(driver)
+
                 try:
                     if method == 1:
                         play = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
@@ -284,27 +316,27 @@ def mainViewer(type1, type2, PROXY, position):
                         play.send_keys(Keys.ENTER)
 
                     else:
-                        searchVideo(driver, query)
+                        search_video(driver, query)
 
-                    bypassSignIn(driver)
+                    bypass_signin(driver)
 
                 except ElementNotInteractableException:
                     try:
-                        bypassSignIn(driver)
+                        bypass_signin(driver)
                     except ElementClickInterceptedException:
-                        bypassAgree(driver)
-                        searchVideo(driver, query)
+                        bypass_agree(driver)
+                        search_video(driver, query)
                     except:
                         pass
 
                 except ElementClickInterceptedException:
-                    bypassAgree(driver)
-                    searchVideo(driver, query)
+                    bypass_agree(driver)
+                    search_video(driver, query)
 
                 except:
                     pass
 
-                checkState(driver)
+                check_state(driver)
 
                 try:
                     video_len = duration_dict[url]
@@ -325,9 +357,9 @@ def mainViewer(type1, type2, PROXY, position):
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                 print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
-                    f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
+                      f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
 
-                checkState(driver)
+                check_state(driver)
 
                 sleep(video_len)
                 driver.quit()
@@ -341,33 +373,37 @@ def mainViewer(type1, type2, PROXY, position):
             except Exception as e:
                 *_, exc_tb = sys.exc_info()
                 print(bcolors.FAIL + f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " +
-                    str(e) + bcolors.ENDC)
+                      str(e) + bcolors.ENDC)
                 driver.quit()
                 status = 400
                 pass
 
     except:
         print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.FAIL +
-              f' {PROXY} | {type2} --> Bad proxy ' + bcolors.ENDC)
-        checked[position] = type2
+              f' {PROXY} | {proxy_type} --> Bad proxy ' + bcolors.ENDC)
+        checked[position] = proxy_type
         pass
 
 
-def viewVideo(position):
+def view_video(position):
     PROXY = proxy_list[position]
 
-    mainViewer('http', 'https', PROXY, position)
-    if checked[position] == 'https':
-        mainViewer('socks4', 'socks4', PROXY, position)
-    if checked[position] == 'socks4':
-        mainViewer('socks5', 'socks5', PROXY, position)
+    if category == 'f':
+        main_viewer('https', PROXY, position)
+        if checked[position] == 'https':
+            main_viewer('socks4', PROXY, position)
+        if checked[position] == 'socks4':
+            main_viewer('socks5', PROXY, position)
+
+    else:
+        main_viewer(proxy_type, PROXY, position)
 
 
 def main():
     pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = [executor.submit(viewVideo, position)
+        futures = [executor.submit(view_video, position)
                    for position in pool_number]
 
         try:
@@ -396,31 +432,61 @@ if __name__ == '__main__':
 
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
+    category = input(bcolors.WARNING +
+                     "What's your proxy category? [F = Free Proxy, P = Premium Proxy, R = Rotating Proxy] : " + bcolors.ENDC).lower()
+
+    if category == 'f':
+        handle_proxy = str(input(
+            bcolors.OKBLUE + 'Let YouTube Viewer handle proxies ? [Y/n] : ' + bcolors.ENDC)).lower()
+
+        if handle_proxy == 'y' or handle_proxy == 'yes' or handle_proxy == '':
+            proxy_list = gather_proxy()
+        else:
+            proxy_list = load_proxy()
+
+    elif category == 'p' or category == 'r':
+        handle_proxy = str(input(
+            bcolors.OKBLUE + "Select proxy type [1 = HTTPS , 2 = SOCKS4, 3 = SOCKS5] : " + bcolors.ENDC)).lower()
+
+        if handle_proxy == '1':
+            proxy_type = 'https'
+        elif handle_proxy == '2':
+            proxy_type = 'socks4'
+        elif handle_proxy == '3':
+            proxy_type = 'socks5'
+        else:
+            print('Please input 1 for HTTPS, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
+            sys.exit()
+        
+        if category == 'r':
+            PROXY = input(bcolors.OKBLUE +
+                'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
+            proxy_list = [PROXY]
+            proxy_list = proxy_list * 100000
+        else:
+            proxy_list = load_proxy()
+
+    else:
+        print('Please input F for Free, P for Premium and R for Rotating proxy')
+        sys.exit()
+
+    if category != 'r':
+        proxy_list = list(set(proxy_list))  # removing duplicate proxies
+        proxy_list = list(filter(None, proxy_list))  # removing empty proxies
+
+    total_proxies = len(proxy_list)
+    print(bcolors.OKCYAN + f'Total proxies : {total_proxies}' + bcolors.ENDC)
+
     gui = str(input(
         bcolors.WARNING + 'Do you want to run in headless(background) mode? (recommended=No) [No/yes] : ' + bcolors.ENDC)).lower()
 
     if gui == 'n' or gui == 'no' or gui == '':
         background = False
-        threads = int(
-            input(bcolors.OKBLUE+'Threads (recommended = 5): ' + bcolors.ENDC))
     else:
         background = True
-        threads = int(
-            input(bcolors.OKBLUE+'Threads (recommended = 10): ' + bcolors.ENDC))
 
-    handle_proxy = str(input(
-        bcolors.OKBLUE + 'Let YouTube Viewer handle proxies ? [Y/n] : ' + bcolors.ENDC)).lower()
-
-    if handle_proxy == 'y' or handle_proxy == 'yes' or handle_proxy == '':
-        proxy_list = gather_proxy()
-    else:
-        proxy_list = load_proxy()
-
-    proxy_list = list(set(proxy_list))  # removing duplicate proxies
-    proxy_list = list(filter(None, proxy_list))  # removing empty proxies
-
-    total_proxies = len(proxy_list)
-    print(bcolors.OKCYAN + f'Total proxies : {total_proxies}' + bcolors.ENDC)
+    threads = int(
+        input(bcolors.OKBLUE+'Threads (recommended = 5): ' + bcolors.ENDC))
 
     check = -1
     while len(view) < views:
