@@ -1,4 +1,7 @@
+import platform
 import random
+import subprocess
+import sys
 import time
 
 import undetected_chromedriver as uc
@@ -8,10 +11,41 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+print('This will open one chrome driver to test if everything works as expected.\n')
+
+print('Getting Chrome Driver...')
+
+OSNAME = platform.system()
+
+"""
+Getting Chrome version code has been taken from 
+https://github.com/yeongbin-jo/python-chromedriver-autoinstaller
+Thanks goes to him.
+"""
+if OSNAME == 'Linux':
+    with subprocess.Popen(['chromium-browser', '--version'], stdout=subprocess.PIPE) as proc:
+        version = proc.stdout.read().decode('utf-8').replace('Chromium', '').strip()
+        version = version.replace('Google Chrome', '').strip()
+elif OSNAME == 'Darwin':
+    process = subprocess.Popen(
+        ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
+    version = process.communicate()[0].decode(
+        'UTF-8').replace('Google Chrome', '').strip()
+elif OSNAME == 'Windows':
+    process = subprocess.Popen(
+        ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
+    )
+    version = process.communicate()[0].decode('UTF-8').strip().split()[-1]
+else:
+    print('{} OS is not supported.'.format(OSNAME))
+    sys.exit()
+
+major_version = version.split('.')[0]
+
+uc.TARGET_VERSION = major_version
+
 uc.install()
-
-
-print('This will open one chrome driver to test if everything works as expected.')
 
 driver = None
 
