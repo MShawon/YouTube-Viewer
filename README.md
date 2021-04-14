@@ -23,7 +23,7 @@
 # YouTube Viewer
 Simple program to increase YouTube views written in Python.
 
-**Disclaimer:** This has been developed for educational purposes only.
+**Disclaimer:** This has been developed for educational purposes only. Any action you take using this script is strictly at your own risk. I will not be liable for any losses or damages you face using this script.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
@@ -42,7 +42,7 @@ Simple program to increase YouTube views written in Python.
 
 # Proxies
 * ## Free Proxy
-   Try not to use free proxies.
+   Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use free proxy category.
 
 * ## Premium Proxy
    Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when script asks for proxy file name.
@@ -83,6 +83,7 @@ Simple program to increase YouTube views written in Python.
 
    * After closing program, if chromedrivers are still running. You may want to double click **killdrive.bat** to close all chrome instances.
 
+   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors.
 
 * ## Usage
    * Open command prompt in YouTube-Viewer folder and run
@@ -116,6 +117,7 @@ Simple program to increase YouTube views written in Python.
       ```
       ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9
       ```
+   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors.
 
 * ## Usage
    * Open command prompt in YouTube-Viewer folder and run

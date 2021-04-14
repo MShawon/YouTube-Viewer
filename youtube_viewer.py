@@ -25,6 +25,7 @@ SOFTWARE.
 import concurrent.futures.thread
 import os
 import platform
+import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from random import choice, randint, uniform
@@ -40,8 +41,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from seleniumwire import webdriver
-
-uc.install()
 
 os.system("")
 
@@ -90,6 +89,41 @@ status = None
 view = []
 duration_dict = {}
 checked = {}
+
+print(bcolors.WARNING + 'Getting Chrome Driver...' + bcolors.ENDC)
+
+OSNAME = platform.system()
+
+"""
+Getting Chrome version code has been taken from 
+https://github.com/yeongbin-jo/python-chromedriver-autoinstaller
+Thanks goes to him.
+"""
+if OSNAME == 'Linux':
+    with subprocess.Popen(['chromium-browser', '--version'], stdout=subprocess.PIPE) as proc:
+        version = proc.stdout.read().decode('utf-8').replace('Chromium', '').strip()
+        version = version.replace('Google Chrome', '').strip()
+elif OSNAME == 'Darwin':
+    OSNAME = 'Macintosh'
+    process = subprocess.Popen(
+        ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
+    version = process.communicate()[0].decode(
+        'UTF-8').replace('Google Chrome', '').strip()
+elif OSNAME == 'Windows':
+    process = subprocess.Popen(
+        ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
+    )
+    version = process.communicate()[0].decode('UTF-8').strip().split()[-1]
+else:
+    print('{} OS is not supported.'.format(OSNAME))
+    sys.exit()
+
+major_version = version.split('.')[0]
+
+uc.TARGET_VERSION = major_version
+
+uc.install()
 
 
 def load_url():
@@ -304,7 +338,7 @@ def main_viewer(proxy_type, PROXY, position):
                     url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
 
                 driver = get_driver(agent, PROXY, proxy_type)
-                
+
                 driver.get(url)
 
                 bypass_consent(driver)
@@ -423,10 +457,6 @@ def main():
 
 if __name__ == '__main__':
 
-    OSNAME = platform.system()
-    if OSNAME == 'Darwin':
-        OSNAME = 'Macintosh'
-
     urls = load_url()
     queries = load_search()
 
@@ -457,10 +487,10 @@ if __name__ == '__main__':
         else:
             print('Please input 1 for HTTPS, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
             sys.exit()
-        
+
         if category == 'r':
             PROXY = input(bcolors.OKBLUE +
-                'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
+                          'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
             proxy_list = [PROXY]
             proxy_list = proxy_list * 100000
         else:
