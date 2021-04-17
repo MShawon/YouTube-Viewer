@@ -23,10 +23,10 @@ https://github.com/yeongbin-jo/python-chromedriver-autoinstaller
 Thanks goes to him.
 """
 if OSNAME == 'Linux':
-    with subprocess.Popen(['chromium-browser', '--version'], stdout=subprocess.PIPE) as proc:
-        version = proc.stdout.read().decode('utf-8').replace('Chromium', '').strip()
-        version = version.replace('Google Chrome', '').strip()
+    with subprocess.Popen(['google-chrome', '--version'], stdout=subprocess.PIPE) as proc:
+        version = proc.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
 elif OSNAME == 'Darwin':
+    OSNAME = 'Macintosh'
     process = subprocess.Popen(
         ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
     version = process.communicate()[0].decode(
