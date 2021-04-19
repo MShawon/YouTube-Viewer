@@ -33,7 +33,7 @@ from time import gmtime, sleep, strftime
 
 import requests
 import undetected_chromedriver as uc
-from fake_useragent import UserAgent, UserAgentError
+from fake_headers import Headers
 from selenium.common.exceptions import (ElementClickInterceptedException,
                                         ElementNotInteractableException)
 from selenium.webdriver.common.by import By
@@ -74,21 +74,18 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-print(bcolors.WARNING + 'Collecting User-Agent...' + bcolors.ENDC)
-
-try:
-    ua = UserAgent(use_cache_server=False, verify_ssl=False)
-except UserAgentError:
-    ua = UserAgent(path='fake_useragent_0.1.11.json')
-
-
-PROXY = None
+proxy = None
 driver = None
 status = None
 
 view = []
 duration_dict = {}
 checked = {}
+REFERER = ['https://www.youtube.com/', 'https://github.com/', 'https://www.facebook.com/', 'https://www.google.com/',
+           'https://m.facebook.com/', 'https://yandex.com/', 'https://www.yahoo.com/', 'https://www.bing.com/', 'https://duckduckgo.com/']
+
+VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
+            '1536,864', '1366,768', '1280,1024', '1024,768']
 
 print(bcolors.WARNING + 'Getting Chrome Driver...' + bcolors.ENDC)
 
@@ -100,15 +97,17 @@ https://github.com/yeongbin-jo/python-chromedriver-autoinstaller
 Thanks goes to him.
 """
 if OSNAME == 'Linux':
+    OSNAME = 'lin'
     with subprocess.Popen(['google-chrome', '--version'], stdout=subprocess.PIPE) as proc:
         version = proc.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
 elif OSNAME == 'Darwin':
-    OSNAME = 'Macintosh'
+    OSNAME = 'mac'
     process = subprocess.Popen(
         ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
     version = process.communicate()[0].decode(
         'UTF-8').replace('Google Chrome', '').strip()
 elif OSNAME == 'Windows':
+    OSNAME = 'win'
     process = subprocess.Popen(
         ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
@@ -197,20 +196,20 @@ def load_proxy():
     return proxies
 
 
-def check_proxy(agent, PROXY, proxy_type):
+def check_proxy(agent, proxy, proxy_type):
     if category == 'f':
         headers = {
             'User-Agent': f'{agent}',
         }
         if proxy_type == 'https':
             proxyDict = {
-                "http": f"http://{PROXY}",
-                "https": f"https://{PROXY}",
+                "http": f"http://{proxy}",
+                "https": f"https://{proxy}",
             }
         else:
             proxyDict = {
-                "http": f"{proxy_type}://{PROXY}",
-                "https": f"{proxy_type}://{PROXY}",
+                "http": f"{proxy_type}://{proxy}",
+                "https": f"{proxy_type}://{proxy}",
             }
         response = requests.get(
             'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
@@ -222,12 +221,10 @@ def check_proxy(agent, PROXY, proxy_type):
     return status
 
 
-def get_driver(agent, PROXY, proxy_type):
+def get_driver(agent, proxy, proxy_type):
     options = webdriver.ChromeOptions()
     options.headless = background
-    viewport = ['2560,1440', '1920,1080', '1440,900',
-                '1536,864', '1366,768', '1280,1024', '1024,768']
-    options.add_argument(f"--window-size={choice(viewport)}")
+    options.add_argument(f"--window-size={choice(VIEWPORT)}")
     options.add_argument("--log-level=3")
     options.add_experimental_option(
         "excludeSwitches", ["enable-automation", "enable-logging"])
@@ -242,15 +239,15 @@ def get_driver(agent, PROXY, proxy_type):
     if proxy_type == 'https':
         sw_options = {
             'proxy': {
-                'http': f'http://{PROXY}',
-                'https': f'https://{PROXY}',
+                'http': f'http://{proxy}',
+                'https': f'https://{proxy}',
             }
         }
     else:
         sw_options = {
             'proxy': {
-                'http': f'{proxy_type}://{PROXY}',
-                'https': f'{proxy_type}://{PROXY}',
+                'http': f'{proxy_type}://{proxy}',
+                'https': f'{proxy_type}://{proxy}',
             }
         }
 
@@ -312,31 +309,40 @@ def sleeping():
     sleep(30)
 
 
-def main_viewer(proxy_type, PROXY, position):
+def main_viewer(proxy_type, proxy, position):
     try:
 
         checked[position] = None
 
-        agent = ua.chrome
-        while OSNAME not in agent:
-            agent = ua.chrome
+        header = Headers(
+            browser="chrome",
+            os=OSNAME,
+            headers=False
+        ).generate()
+        agent = header['User-Agent']
 
-        status = check_proxy(agent, PROXY, proxy_type)
+        status = check_proxy(agent, proxy, proxy_type)
 
         if status == 200:
             try:
                 print(bcolors.OKBLUE + f"Tried {position+1} |" +
-                      bcolors.OKGREEN + f'{PROXY} | {proxy_type} --> Good Proxy | Searching for videos...' + bcolors.ENDC)
+                      bcolors.OKGREEN + f'{proxy} | {proxy_type} --> Good Proxy | Searching for videos...' + bcolors.ENDC)
+
+                driver = get_driver(agent, proxy, proxy_type)
 
                 if position % 2:
                     method = 1
                     url = choice(urls)
+                    if 'youtu' in url:
+                        def interceptor(request):
+                            del request.headers['Referer']
+                            request.headers['Referer'] = choice(REFERER)
+
+                        driver.request_interceptor = interceptor
                 else:
                     method = 2
                     query = choice(queries)
                     url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
-
-                driver = get_driver(agent, PROXY, proxy_type)
 
                 driver.get(url)
 
@@ -390,7 +396,7 @@ def main_viewer(proxy_type, PROXY, position):
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                 print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
-                      f' {PROXY} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
+                      f' {proxy} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
 
                 check_state(driver)
 
@@ -413,23 +419,23 @@ def main_viewer(proxy_type, PROXY, position):
 
     except:
         print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.FAIL +
-              f' {PROXY} | {proxy_type} --> Bad proxy ' + bcolors.ENDC)
+              f' {proxy} | {proxy_type} --> Bad proxy ' + bcolors.ENDC)
         checked[position] = proxy_type
         pass
 
 
 def view_video(position):
-    PROXY = proxy_list[position]
+    proxy = proxy_list[position]
 
     if category == 'f':
-        main_viewer('https', PROXY, position)
+        main_viewer('https', proxy, position)
         if checked[position] == 'https':
-            main_viewer('socks4', PROXY, position)
+            main_viewer('socks4', proxy, position)
         if checked[position] == 'socks4':
-            main_viewer('socks5', PROXY, position)
+            main_viewer('socks5', proxy, position)
 
     else:
-        main_viewer(proxy_type, PROXY, position)
+        main_viewer(proxy_type, proxy, position)
 
 
 def main():
@@ -462,7 +468,7 @@ if __name__ == '__main__':
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
     category = input(bcolors.WARNING +
-                     "What's your proxy category? [F = Free Proxy, P = Premium Proxy, R = Rotating Proxy] : " + bcolors.ENDC).lower()
+                     "What's your proxy category? [F = Free (without user:pass), P = Premium (with user:pass), R = Rotating Proxy] : " + bcolors.ENDC).lower()
 
     if category == 'f':
         handle_proxy = str(input(
@@ -488,9 +494,9 @@ if __name__ == '__main__':
             sys.exit()
 
         if category == 'r':
-            PROXY = input(bcolors.OKBLUE +
+            proxy = input(bcolors.OKBLUE +
                           'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
-            proxy_list = [PROXY]
+            proxy_list = [proxy]
             proxy_list = proxy_list * 100000
         else:
             proxy_list = load_proxy()

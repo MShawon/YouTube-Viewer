@@ -48,7 +48,7 @@ Simple program to increase YouTube views written in Python.
    Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when script asks for proxy file name.
 
 * ## Rotating Proxy
-   You can also use rotating proxies service. Make sure to authenticate your IP on their website and use the Main Gateway (ipaddress:port) they provide you.
+   You can also use rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway.
 
 # Urls
   Put video links in the urls.txt. For multiple videos place urls in multple lines.
@@ -57,6 +57,8 @@ Simple program to increase YouTube views written in Python.
 
 # Search
   Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
+
+  *If you don't know any keyword just put your `video title : video title` in search.txt* 
 
 # Windows
 * ## Binary Release
