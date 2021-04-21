@@ -258,7 +258,7 @@ def get_driver(agent, proxy, proxy_type):
 
 def bypass_consent(driver):
     try:
-        consent = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+        consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
             (By.XPATH, "//input[@type='submit' and @value='I agree']")))
         consent.submit()
     except:
@@ -325,8 +325,8 @@ def main_viewer(proxy_type, proxy, position):
 
         if status == 200:
             try:
-                print(bcolors.OKBLUE + f"Tried {position+1} |" +
-                      bcolors.OKGREEN + f'{proxy} | {proxy_type} --> Good Proxy | Searching for videos...' + bcolors.ENDC)
+                print(bcolors.OKBLUE + f"Tried {position+1} | " +
+                      bcolors.OKGREEN + f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
 
                 driver = get_driver(agent, proxy, proxy_type)
 
@@ -343,10 +343,16 @@ def main_viewer(proxy_type, proxy, position):
                     method = 2
                     query = choice(queries)
                     url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
-
+               
+            
+                # driver.get('https://ipof.me')
+                # sleep(30)
+                
                 driver.get(url)
 
-                bypass_consent(driver)
+                if 'consent' in driver.current_url:
+                    print(bcolors.OKBLUE + f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
+                    bypass_consent(driver)
 
                 try:
                     if method == 1:
@@ -395,8 +401,8 @@ def main_viewer(proxy_type, proxy, position):
                 video_len = video_len*uniform(.85, .95)
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
-                print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
-                      f' {proxy} --> Video Found : {url} | Watch Duration : {duration} ' + bcolors.ENDC)
+                print(bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                      f"{proxy} --> Video Found : {url} | Watch Duration : {duration} " + bcolors.ENDC)
 
                 check_state(driver)
 
@@ -418,8 +424,8 @@ def main_viewer(proxy_type, proxy, position):
                 pass
 
     except:
-        print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.FAIL +
-              f' {proxy} | {proxy_type} --> Bad proxy ' + bcolors.ENDC)
+        print(bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.FAIL +
+              f"{proxy} | {proxy_type} --> Bad proxy " + bcolors.ENDC)
         checked[position] = proxy_type
         pass
 
