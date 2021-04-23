@@ -60,6 +60,12 @@ Simple program to increase YouTube views written in Python.
 
   *If you don't know any keyword just put your `video title : video title` in search.txt* 
 
+# Install Certificate
+   You need to install the root certificate manually for once. Download that certificate from here https://raw.githubusercontent.com/wkeeling/selenium-wire/master/seleniumwire/ca.crt.
+   * Open Google Chrome's settings and search for "Manage certificates".
+   * On the Manage certificates screen, click the "Trusted Root Certification Authorities" tab and then "Import".
+   * Select the ca.crt file you just downloaded and then just hit "Next", "Finish" and "Yes".
+
 # Windows
 * ## Binary Release
 
@@ -94,8 +100,6 @@ Simple program to increase YouTube views written in Python.
         ```
    * Rest is self explanatory.
 
-    ![alt text](demo_windows.png "Demo Windows")
-
 # Linux / Mac
 * ## Installation 
  
@@ -127,8 +131,6 @@ Simple program to increase YouTube views written in Python.
         $ python3 youtube_viewer.py
         ```
    * Rest is self explanatory.
-
-   ![alt text](demo_linux.png "Demo Linux")
 
 # Donation
  **BTC**
