@@ -41,6 +41,7 @@ Simple program to increase YouTube views written in Python.
  * Chrome driver will be downloaded automatically by undetected-chromedriver
 
 # Proxies
+ Buy premium proxies from my referral link : [Webshare](https://www.webshare.io/?referral_code=8hd5him4soj1)
 * ## Free Proxy
    Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use free proxy category.
 
