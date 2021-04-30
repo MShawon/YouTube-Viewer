@@ -28,6 +28,7 @@ import platform
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from random import choice, randint, uniform
 from time import gmtime, sleep, strftime
 
@@ -77,6 +78,7 @@ print(bcolors.OKCYAN + """
 proxy = None
 driver = None
 status = None
+reload_proxy = False
 
 view = []
 duration_dict = {}
@@ -124,6 +126,11 @@ uc.TARGET_VERSION = major_version
 uc.install()
 
 
+def timestamp():
+    date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
+    return bcolors.OKGREEN + f'[{date_fmt}] '
+
+
 def load_url():
     links = []
     print(bcolors.WARNING + 'Loading urls...' + bcolors.ENDC)
@@ -163,10 +170,10 @@ def gather_proxy():
     proxies = []
     print(bcolors.OKGREEN + 'Scraping proxies ...' + bcolors.ENDC)
 
-    link_list = ['https://www.proxyscan.io/download?type=http',
-                 'https://www.proxyscan.io/download?type=https',
-                 'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
+    link_list = ['https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
                  'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
+                 'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks4.txt',
+                 'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt',
                  'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/proxy.txt',
                  'https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt']
 
@@ -325,8 +332,8 @@ def main_viewer(proxy_type, proxy, position):
 
         if status == 200:
             try:
-                print(bcolors.OKBLUE + f"Tried {position+1} | " +
-                      bcolors.OKGREEN + f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
+                print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                      f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
 
                 driver = get_driver(agent, proxy, proxy_type)
 
@@ -343,15 +350,15 @@ def main_viewer(proxy_type, proxy, position):
                     method = 2
                     query = choice(queries)
                     url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
-               
-            
+
                 # driver.get('https://ipof.me')
                 # sleep(30)
-                
+
                 driver.get(url)
 
                 if 'consent' in driver.current_url:
-                    print(bcolors.OKBLUE + f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
+                    print(timestamp() + bcolors.OKBLUE +
+                          f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
                     bypass_consent(driver)
 
                 try:
@@ -401,7 +408,7 @@ def main_viewer(proxy_type, proxy, position):
                 video_len = video_len*uniform(.85, .95)
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
-                print(bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
                       f"{proxy} --> Video Found : {url} | Watch Duration : {duration} " + bcolors.ENDC)
 
                 check_state(driver)
@@ -410,22 +417,22 @@ def main_viewer(proxy_type, proxy, position):
                 driver.quit()
 
                 view.append(position)
-                print(bcolors.OKCYAN +
+                print(timestamp() + bcolors.OKCYAN +
                       f'View added : {len(view)}' + bcolors.ENDC)
 
                 status = 400
 
             except Exception as e:
                 *_, exc_tb = sys.exc_info()
-                print(bcolors.FAIL + f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " +
-                      str(e) + bcolors.ENDC)
+                print(timestamp() + bcolors.FAIL +
+                      f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " + str(e) + bcolors.ENDC)
                 driver.quit()
                 status = 400
                 pass
 
     except:
-        print(bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.FAIL +
-              f"{proxy} | {proxy_type} --> Bad proxy " + bcolors.ENDC)
+        print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " +
+              bcolors.FAIL + f"{proxy} | {proxy_type} --> Bad proxy " + bcolors.ENDC)
         checked[position] = proxy_type
         pass
 
@@ -481,6 +488,7 @@ if __name__ == '__main__':
             bcolors.OKBLUE + 'Let YouTube Viewer handle proxies ? [Y/n] : ' + bcolors.ENDC)).lower()
 
         if handle_proxy == 'y' or handle_proxy == 'yes' or handle_proxy == '':
+            reload_proxy = True
             proxy_list = gather_proxy()
         else:
             proxy_list = load_proxy()
@@ -511,12 +519,13 @@ if __name__ == '__main__':
         print('Please input F for Free, P for Premium and R for Rotating proxy')
         sys.exit()
 
-    if category != 'r':
-        proxy_list = list(set(proxy_list))  # removing duplicate proxies
-        proxy_list = list(filter(None, proxy_list))  # removing empty proxies
+    proxy_list = list(filter(None, proxy_list))  # removing empty lines
 
     total_proxies = len(proxy_list)
-    print(bcolors.OKCYAN + f'Total proxies : {total_proxies}' + bcolors.ENDC)
+
+    if category != 'r':
+        print(bcolors.OKCYAN +
+              f'Total proxies : {total_proxies}' + bcolors.ENDC)
 
     gui = str(input(
         bcolors.WARNING + 'Do you want to run in headless(background) mode? (recommended=No) [No/yes] : ' + bcolors.ENDC)).lower()
@@ -539,6 +548,10 @@ if __name__ == '__main__':
                 sleeping()
                 print(bcolors.WARNING +
                       f'Total Checked : {check} times' + bcolors.ENDC)
+                if reload_proxy:
+                    proxy_list = gather_proxy()
+                    proxy_list = list(filter(None, proxy_list))
+                    total_proxies = len(proxy_list)
                 main()
         except KeyboardInterrupt:
             sys.exit()
