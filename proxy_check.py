@@ -28,7 +28,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-from fake_useragent import UserAgent, UserAgentError
+from fake_headers import Headers
 
 os.system("")
 
@@ -58,6 +58,10 @@ print(bcolors.OKGREEN + """
                                           
 """ + bcolors.ENDC)
 
+print(bcolors.OKCYAN + """
+[ GitHub : https://github.com/MShawon/YouTube-Viewer ]
+""" + bcolors.ENDC)
+
 '''
 Backup previous checked goodproxies
 '''
@@ -72,11 +76,6 @@ try:
     os.remove('GoodProxy.txt')
 except:
     pass
-
-try:
-    ua = UserAgent(use_cache_server=False, verify_ssl=False)
-except UserAgentError:
-    ua = UserAgent(path='fake_useragent_0.1.11.json')
 
 checked = {}
 
@@ -105,9 +104,12 @@ def mainChecker(type1, type2, proxy, position):
         "https": f"{type2}://"+proxy,
     }
 
-    # print(proxyDict)
     try:
-        agent = ua.random
+
+        header = Headers(
+            headers=False
+        ).generate()
+        agent = header['User-Agent']
 
         headers = {
             'User-Agent': f'{agent}',

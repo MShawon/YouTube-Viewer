@@ -36,7 +36,8 @@ import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers
 from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        ElementNotInteractableException)
+                                        ElementNotInteractableException,
+                                        NoSuchElementException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -278,9 +279,18 @@ def bypass_consent(driver):
 
 
 def search_video(driver, query):
-    find_video = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-        (By.XPATH, f'//*[@title="{query[1]}"]')))
-    find_video.click()
+    for i in range(10):
+        try:
+            section = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
+                (By.XPATH, f'//ytd-item-section-renderer[{i+1}]')))
+            find_video = section.find_element_by_xpath(
+                f'//*[@title="{query[1]}"]')
+            find_video.click()
+            break
+        except NoSuchElementException:
+            WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+                (By.TAG_NAME, 'body'))).send_keys(Keys.CONTROL, Keys.END)
+            sleep(5)
 
 
 def bypass_agree(driver):
