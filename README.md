@@ -27,6 +27,12 @@ Simple program to increase YouTube views written in Python.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
+# Important Update
+ * search.txt needs to be completed in this format `keyword :::: exact video title`. This fixes a bug that occurs when the video title contains ':'. So, instead of one ':' colon to separate keyword and title update search.txt with four colons ( '::::' )  
+ * This update only uses selenium. So, random referer is deprecated and proxies with authentication for **socks** proxies are not possible anymore. For premium **socks** proxies please authenticate your IP in your proxy provider service and use the free proxy category in the script.
+ * selenium-wire is not being used anymore because of certificate installation which can give away the bot and some issues mentioned about threads error.
+ * From now on, proxies with authentication will be done by extension. Unfortunately, Chrome only supports proxies with authentication for **http** type proxy.
+
 # View Decrease
  If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
 
@@ -42,14 +48,16 @@ Simple program to increase YouTube views written in Python.
 
 # Proxies
  Buy premium proxies from my referral link : [Webshare](https://www.webshare.io/?referral_code=8hd5him4soj1)
+
 * ## Free Proxy
-   Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use free proxy category.
+   Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use the free proxy category.
 
 * ## Premium Proxy
-   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when script asks for proxy file name.
+   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when the script asks for a proxy file name.
+   **N.B:** Only available for **http** type proxy.
 
 * ## Rotating Proxy
-   You can also use rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway.
+   You can also use the rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway but this will only work for **http** type proxy.
 
 # Urls
   Put video links in the urls.txt. For multiple videos place urls in multple lines.
@@ -57,15 +65,10 @@ Simple program to increase YouTube views written in Python.
   2) If you have any external link which will redirect to your youtube video you can use that too. Example : when you post a YouTube video link in **twitter** and you hit play on twitter, you will get a link like this `https://t.co/xxxxxxxxxx?amp=1`. This is helpful because YouTube will see that views are coming from External Source like twitter in this example.
 
 # Search
-  Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword : video title` in **search.txt** 
+  Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword :::: video title` in **search.txt** 
 
-  *If you don't know any keyword just put your `video title : video title` in search.txt* 
+  *If you don't know any keyword just put your `video title :::: video title` in search.txt*
 
-# Install Certificate
-   You need to install the root certificate manually for once. Download that certificate from here https://raw.githubusercontent.com/wkeeling/selenium-wire/master/seleniumwire/ca.crt.
-   * Open Google Chrome's settings and search for "Manage certificates".
-   * On the Manage certificates screen, click the "Trusted Root Certification Authorities" tab and then "Import".
-   * Select the ca.crt file you just downloaded and then just hit "Next", "Finish" and "Yes".
 
 # Windows
 * ## Binary Release
@@ -134,8 +137,9 @@ Simple program to increase YouTube views written in Python.
    * Rest is self explanatory.
 
 # Donation
- **BTC**
- `1Jh8KZ6khuHayNDeVV9tEzYSq9FPExKCAH`
+ If this project helps you in any way, you can give me a cup of coffee :grinning:
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://paypal.me/mshawon1)
  
 # Credits
 I want to thank all of you who have opened an issue or shared your ideas with me! 

@@ -27,6 +27,7 @@ import os
 import platform
 import subprocess
 import sys
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from random import choice, randint, uniform
@@ -35,6 +36,7 @@ from time import gmtime, sleep, strftime
 import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers
+from selenium import webdriver
 from selenium.common.exceptions import (ElementClickInterceptedException,
                                         ElementNotInteractableException,
                                         NoSuchElementException)
@@ -42,7 +44,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from seleniumwire import webdriver
 
 os.system("")
 
@@ -80,12 +81,11 @@ proxy = None
 driver = None
 status = None
 reload_proxy = False
+auth_required = False
 
 view = []
 duration_dict = {}
 checked = {}
-REFERER = ['https://www.youtube.com/', 'https://github.com/', 'https://www.facebook.com/', 'https://www.google.com/',
-           'https://m.facebook.com/', 'https://yandex.com/', 'https://www.yahoo.com/', 'https://www.bing.com/', 'https://duckduckgo.com/']
 
 VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
             '1536,864', '1366,768', '1280,1024', '1024,768']
@@ -126,6 +126,10 @@ uc.TARGET_VERSION = major_version
 
 uc.install()
 
+try:
+    os.makedirs('extension')
+except OSError:
+    pass
 
 def timestamp():
     date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
@@ -155,7 +159,7 @@ def load_search():
     filename = 'search.txt'
     load = open(filename, encoding="utf-8")
     loaded = [items.rstrip().strip() for items in load]
-    loaded = [[i.strip() for i in items.split(':')] for items in loaded]
+    loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
     load.close()
 
     for lines in loaded:
@@ -209,16 +213,11 @@ def check_proxy(agent, proxy, proxy_type):
         headers = {
             'User-Agent': f'{agent}',
         }
-        if proxy_type == 'https':
-            proxyDict = {
-                "http": f"http://{proxy}",
-                "https": f"https://{proxy}",
-            }
-        else:
-            proxyDict = {
-                "http": f"{proxy_type}://{proxy}",
-                "https": f"{proxy_type}://{proxy}",
-            }
+
+        proxyDict = {
+            "http": f"{proxy_type}://{proxy}",
+            "https": f"{proxy_type}://{proxy}",
+        }
         response = requests.get(
             'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
         status = response.status_code
@@ -229,7 +228,7 @@ def check_proxy(agent, proxy, proxy_type):
     return status
 
 
-def get_driver(agent, proxy, proxy_type):
+def get_driver(agent, proxy, proxy_type, pluginfile):
     options = webdriver.ChromeOptions()
     options.headless = background
     options.add_argument(f"--window-size={choice(VIEWPORT)}")
@@ -238,28 +237,74 @@ def get_driver(agent, proxy, proxy_type):
         "excludeSwitches", ["enable-automation", "enable-logging"])
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument(f"user-agent={agent}")
+    options.add_argument("--mute-audio")
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
         'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
-    sw_options = {
-        'disable_capture': True  # Pass all requests straight through
-    }
 
-    if proxy_type == 'https':
-        sw_options = {
-            'proxy': {
-                'http': f'http://{proxy}',
-                'https': f'https://{proxy}',
-            }
+    if auth_required:
+        proxy = proxy.replace('@', ':')
+        proxy = proxy.split(':')
+        manifest_json = """
+        {
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "name": "Chrome Proxy",
+            "permissions": [
+                "proxy",
+                "tabs",
+                "unlimitedStorage",
+                "storage",
+                "<all_urls>",
+                "webRequest",
+                "webRequestBlocking"
+            ],
+            "background": {
+                "scripts": ["background.js"]
+            },
+            "minimum_chrome_version":"22.0.0"
         }
+        """
+
+        background_js = """
+        var config = {
+                mode: "fixed_servers",
+                rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: parseInt(%s)
+                },
+                bypassList: ["localhost"]
+                }
+            };
+
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+        function callbackFn(details) {
+            return {
+                authCredentials: {
+                    username: "%s",
+                    password: "%s"
+                }
+            };
+        }
+
+        chrome.webRequest.onAuthRequired.addListener(
+                    callbackFn,
+                    {urls: ["<all_urls>"]},
+                    ['blocking']
+        );
+        """ % (proxy[2], proxy[-1], proxy[0], proxy[1])
+
+        with zipfile.ZipFile(pluginfile, 'w') as zp:
+            zp.writestr("manifest.json", manifest_json)
+            zp.writestr("background.js", background_js)
+        options.add_extension(pluginfile)
+
     else:
-        sw_options = {
-            'proxy': {
-                'http': f'{proxy_type}://{proxy}',
-                'https': f'{proxy_type}://{proxy}',
-            }
-        }
+        options.add_argument(f'--proxy-server={proxy_type}://{proxy}')
 
-    driver = webdriver.Chrome(options=options, seleniumwire_options=sw_options)
+    driver = webdriver.Chrome(options=options)
 
     return driver
 
@@ -345,21 +390,18 @@ def main_viewer(proxy_type, proxy, position):
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
                       f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
 
-                driver = get_driver(agent, proxy, proxy_type)
+                pluginfile = os.path.join('extension', f'proxy_auth_plugin{position}.zip')
+
+                driver = get_driver(agent, proxy, proxy_type, pluginfile)
 
                 if position % 2:
                     method = 1
                     url = choice(urls)
-                    if 'youtu' in url:
-                        def interceptor(request):
-                            del request.headers['Referer']
-                            request.headers['Referer'] = choice(REFERER)
 
-                        driver.request_interceptor = interceptor
                 else:
                     method = 2
                     query = choice(queries)
-                    url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '%20')}"
+                    url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '+')}"
 
                 # driver.get('https://ipof.me')
                 # sleep(30)
@@ -413,8 +455,6 @@ def main_viewer(proxy_type, proxy, position):
 
                     duration_dict[url] = video_len
 
-                # Randomizing watch duration between 85% to 95% of total video duration
-                # to avoid pattern and youtube next suggested video
                 video_len = video_len*uniform(.85, .95)
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
@@ -431,13 +471,22 @@ def main_viewer(proxy_type, proxy, position):
                       f'View added : {len(view)}' + bcolors.ENDC)
 
                 status = 400
+                try:
+                    os.remove(pluginfile)
+                except:
+                    pass
 
             except Exception as e:
+                try:
+                    os.remove(pluginfile)
+                except:
+                    pass
                 *_, exc_tb = sys.exc_info()
                 print(timestamp() + bcolors.FAIL +
                       f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " + str(e) + bcolors.ENDC)
                 driver.quit()
                 status = 400
+
                 pass
 
     except:
@@ -451,8 +500,8 @@ def view_video(position):
     proxy = proxy_list[position]
 
     if category == 'f':
-        main_viewer('https', proxy, position)
-        if checked[position] == 'https':
+        main_viewer('http', proxy, position)
+        if checked[position] == 'http':
             main_viewer('socks4', proxy, position)
         if checked[position] == 'socks4':
             main_viewer('socks5', proxy, position)
@@ -504,26 +553,32 @@ if __name__ == '__main__':
             proxy_list = load_proxy()
 
     elif category == 'p' or category == 'r':
-        handle_proxy = str(input(
-            bcolors.OKBLUE + "Select proxy type [1 = HTTPS , 2 = SOCKS4, 3 = SOCKS5] : " + bcolors.ENDC)).lower()
-
-        if handle_proxy == '1':
-            proxy_type = 'https'
-        elif handle_proxy == '2':
-            proxy_type = 'socks4'
-        elif handle_proxy == '3':
-            proxy_type = 'socks5'
-        else:
-            print('Please input 1 for HTTPS, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
-            sys.exit()
-
         if category == 'r':
             proxy = input(bcolors.OKBLUE +
                           'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
             proxy_list = [proxy]
             proxy_list = proxy_list * 100000
+
+            if '@' in proxy:
+                auth_required = True
+                proxy_type = 'http'
+            else:
+                handle_proxy = str(input(
+                    bcolors.OKBLUE + "Select proxy type [1 = HTTP , 2 = SOCKS4, 3 = SOCKS5] : " + bcolors.ENDC)).lower()
+
+                if handle_proxy == '1':
+                    proxy_type = 'http'
+                elif handle_proxy == '2':
+                    proxy_type = 'socks4'
+                elif handle_proxy == '3':
+                    proxy_type = 'socks5'
+                else:
+                    print('Please input 1 for HTTP, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
+                    sys.exit()
         else:
             proxy_list = load_proxy()
+            auth_required = True
+            proxy_type = 'http'
 
     else:
         print('Please input F for Free, P for Premium and R for Rotating proxy')
