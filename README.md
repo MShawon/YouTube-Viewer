@@ -28,11 +28,15 @@ Simple program to increase YouTube views written in Python.
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
 # Important Update
- * search.txt needs to be completed in this format `keyword :::: exact video title`. This fixes a bug that occurs when the video title contains ':'. So, instead of one ':' colon to separate keyword and title update search.txt with four colons ( '::::' )  
+ * search.txt needs to be completed in this format `keyword :::: exact video title`. This fixes a bug that occurs when the video title contains ':'. So, instead of one ':' colon to separate keyword and title, update search.txt with four colons ( '::::' )  
  * This update only uses selenium. So, random referer is deprecated and proxies with authentication for **socks** proxies are not possible anymore. For premium **socks** proxies please authenticate your IP in your proxy provider service and use the free proxy category in the script.
- * selenium-wire is not being used anymore because of certificate installation which can give away the bot and some issues mentioned about threads error.
+ * Sound will be automatically muted.
  * From now on, proxies with authentication will be done by extension. Unfortunately, Chrome only supports proxies with authentication for **http** type proxy.
-
+ * Better way to bypass "Sign In" and "I agree" popup. This will reduce some errors.
+ * Wrong video watch duration shown in terminal is fixed. Only drawback is that, it will wait for some time to bypass everything. Then the video will automatically start playing.
+ * Script update check on start.
+ * Skip ads if available on video start.
+ 
 # View Decrease
  If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
 

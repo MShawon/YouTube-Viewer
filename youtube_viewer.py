@@ -30,16 +30,14 @@ import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from random import choice, randint, uniform
+from random import choice, uniform
 from time import gmtime, sleep, strftime
 
 import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers
 from selenium import webdriver
-from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        ElementNotInteractableException,
-                                        NoSuchElementException)
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -76,6 +74,17 @@ Yb  dP  dP"Yb  88   88 888888 88   88 88""Yb 888888
 print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
+
+SCRIPT_VERSION = '1.3.0'
+
+api_url = 'https://api.github.com/repos/MShawon/YouTube-Viewer/releases/latest'
+response = requests.get(api_url, timeout=30)
+
+RELEASE_VERSION = response.json()['tag_name']
+
+if SCRIPT_VERSION != RELEASE_VERSION:
+    print(bcolors.BOLD + f'Update Available!!! YouTube Viewer version {SCRIPT_VERSION} needs to update to {RELEASE_VERSION} version.' + bcolors.ENDC)
+
 
 proxy = None
 driver = None
@@ -238,6 +247,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument(f"user-agent={agent}")
     options.add_argument("--mute-audio")
+    options.add_argument("--disable-web-security")
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
         'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
 
@@ -338,24 +348,6 @@ def search_video(driver, query):
             sleep(5)
 
 
-def bypass_agree(driver):
-    frame = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-        (By.ID, "iframe")))
-    driver._switch_to.frame(frame)
-    WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-        (By.ID, "introAgreeButton"))).click()
-    driver.switch_to.default_content()
-
-
-def bypass_signin(driver):
-    sleep(1)
-    nothanks = WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
-        (By.CLASS_NAME, "style-scope.yt-button-renderer.style-text.size-small")))
-    nothanks.click()
-    sleep(randint(1, 5))
-    bypass_agree(driver)
-
-
 def check_state(driver):
     try:
         driver.find_element_by_css_selector('[title^="Pause (k)"]')
@@ -365,6 +357,22 @@ def check_state(driver):
         except:
             driver.find_element_by_css_selector(
                 'button.ytp-large-play-button.ytp-button').send_keys(Keys.ENTER)
+
+
+def skip_initial_ad(driver, position):
+    try:
+        skip_ad = WebDriverWait(driver, 45).until(EC.element_to_be_clickable(
+            (By.CLASS_NAME, "ytp-ad-skip-button-container")))
+        if skip_ad:
+            print(timestamp() + bcolors.OKBLUE +
+                f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+            ad_duration = driver.find_element_by_class_name('ytp-time-duration').get_attribute('innerText')
+            ad_duration = sum(x * int(t) for x, t in zip([60, 1], ad_duration.split(":")))
+            ad_duration = ad_duration * uniform(.01, .1)
+            sleep(ad_duration)
+            skip_ad.click()
+    except:
+        pass
 
 
 def sleeping():
@@ -414,31 +422,39 @@ def main_viewer(proxy_type, proxy, position):
                     bypass_consent(driver)
 
                 try:
-                    if method == 1:
-                        play = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-                            (By.CSS_SELECTOR, "button.ytp-large-play-button.ytp-button")))
-                        play.send_keys(Keys.ENTER)
+                    driver.execute_script("""
+                    (function myLoop(i) {
+                    setTimeout(function() {
+                        try{
+                            var nothanks, iagree;
+                            nothanks = document.getElementsByClassName('style-scope yt-button-renderer style-text size-small')[0];
+                            nothanks.click()
+                            iagree = document.getElementsByTagName('iframe')[1].contentDocument.getElementById('introAgreeButton');
+                            iagree.click()
+                        }
+                        catch(err){
+                            try{
+                                iagree = document.getElementsByTagName('iframe')[1].contentDocument.getElementById('introAgreeButton');
+                                iagree.click()
+                            }
+                            catch(err){
+                            }
 
-                    else:
-                        search_video(driver, query)
-
-                    bypass_signin(driver)
-
-                except ElementNotInteractableException:
-                    try:
-                        bypass_signin(driver)
-                    except ElementClickInterceptedException:
-                        bypass_agree(driver)
-                        search_video(driver, query)
-                    except:
-                        pass
-
-                except ElementClickInterceptedException:
-                    bypass_agree(driver)
-                    search_video(driver, query)
-
+                        }
+                        if (--i) myLoop(i);
+                    }, 3000)
+                    })(10);
+                    """)
+                
                 except:
                     pass
+
+                if method == 1:
+                    skip_initial_ad(driver, position)
+
+                else:
+                    search_video(driver, query)
+                    skip_initial_ad(driver, position)
 
                 check_state(driver)
 
@@ -446,9 +462,6 @@ def main_viewer(proxy_type, proxy, position):
                     video_len = duration_dict[url]
                 except KeyError:
                     video_len = 0
-                    WebDriverWait(driver, 80).until(
-                        EC.element_to_be_clickable((By.ID, 'movie_player')))
-
                     while video_len == 0:
                         video_len = driver.execute_script(
                             "return document.getElementById('movie_player').getDuration()")
