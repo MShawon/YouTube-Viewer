@@ -75,7 +75,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.3.0'
+SCRIPT_VERSION = '1.3.1'
 
 api_url = 'https://api.github.com/repos/MShawon/YouTube-Viewer/releases/latest'
 response = requests.get(api_url, timeout=30)
@@ -83,7 +83,8 @@ response = requests.get(api_url, timeout=30)
 RELEASE_VERSION = response.json()['tag_name']
 
 if SCRIPT_VERSION != RELEASE_VERSION:
-    print(bcolors.BOLD + f'Update Available!!! YouTube Viewer version {SCRIPT_VERSION} needs to update to {RELEASE_VERSION} version.' + bcolors.ENDC)
+    print(bcolors.BOLD + 'Update Available!!! ' +
+          f'YouTube Viewer version {SCRIPT_VERSION} needs to update to {RELEASE_VERSION} version.' + bcolors.ENDC)
 
 
 proxy = None
@@ -139,6 +140,19 @@ try:
     os.makedirs('extension')
 except OSError:
     pass
+
+
+class UrlsError(Exception):
+    pass
+
+
+class SearchError(Exception):
+    pass
+
+
+class QueryError(Exception):
+    pass
+
 
 def timestamp():
     date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
@@ -323,23 +337,24 @@ def bypass_consent(driver):
     try:
         consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
             (By.XPATH, "//input[@type='submit' and @value='I agree']")))
+        driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.submit()
     except:
-        try:
-            consent = driver.find_element_by_css_selector(
-                'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
-            consent.click()
-        except:
-            pass
+        consent = driver.find_element_by_css_selector(
+            'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
+        driver.execute_script("arguments[0].scrollIntoView();", consent)
+        consent.click()
 
 
-def search_video(driver, query):
-    for i in range(10):
+
+def search_video(driver, video_title):
+    i = 1
+    for i in range(1, 11):
         try:
-            section = WebDriverWait(driver, 80).until(EC.element_to_be_clickable(
-                (By.XPATH, f'//ytd-item-section-renderer[{i+1}]')))
+            section = WebDriverWait(driver, 60).until(EC.element_to_be_clickable(
+                (By.XPATH, f'//ytd-item-section-renderer[{i}]')))
             find_video = section.find_element_by_xpath(
-                f'//*[@title="{query[1]}"]')
+                f'//*[@title="{video_title}"]')
             find_video.click()
             break
         except NoSuchElementException:
@@ -347,16 +362,23 @@ def search_video(driver, query):
                 (By.TAG_NAME, 'body'))).send_keys(Keys.CONTROL, Keys.END)
             sleep(5)
 
+    return i
+
 
 def check_state(driver):
     try:
         driver.find_element_by_css_selector('[title^="Pause (k)"]')
     except:
         try:
-            driver.find_element_by_css_selector('[title^="Play (k)"]').click()
-        except:
             driver.find_element_by_css_selector(
                 'button.ytp-large-play-button.ytp-button').send_keys(Keys.ENTER)
+        except:
+            try:
+                driver.find_element_by_css_selector('[title^="Play (k)"]').click()
+            except:
+                driver.execute_script(
+                    "document.querySelector('button.ytp-play-button.ytp-button').click()")
+
 
 
 def skip_initial_ad(driver, position):
@@ -365,14 +387,27 @@ def skip_initial_ad(driver, position):
             (By.CLASS_NAME, "ytp-ad-skip-button-container")))
         if skip_ad:
             print(timestamp() + bcolors.OKBLUE +
-                f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
-            ad_duration = driver.find_element_by_class_name('ytp-time-duration').get_attribute('innerText')
-            ad_duration = sum(x * int(t) for x, t in zip([60, 1], ad_duration.split(":")))
+                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+            ad_duration = driver.find_element_by_class_name(
+                'ytp-time-duration').get_attribute('innerText')
+            ad_duration = sum(x * int(t)
+                              for x, t in zip([60, 1], ad_duration.split(":")))
             ad_duration = ad_duration * uniform(.01, .1)
             sleep(ad_duration)
             skip_ad.click()
     except:
         pass
+
+
+def quit_driver(driver, pluginfile):
+    try:
+        os.remove(pluginfile)
+    except:
+        pass
+
+    driver.quit()
+    status = 400
+    return status
 
 
 def sleeping():
@@ -398,18 +433,28 @@ def main_viewer(proxy_type, proxy, position):
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
                       f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
 
-                pluginfile = os.path.join('extension', f'proxy_auth_plugin{position}.zip')
+                pluginfile = os.path.join(
+                    'extension', f'proxy_auth_plugin{position}.zip')
 
                 driver = get_driver(agent, proxy, proxy_type, pluginfile)
+                url = ''
 
                 if position % 2:
-                    method = 1
-                    url = choice(urls)
+                    try:
+                        method = 1
+                        url = choice(urls)
+                    except:
+                        raise UrlsError
 
                 else:
-                    method = 2
-                    query = choice(queries)
-                    url = f"https://www.youtube.com/results?search_query={query[0].replace(' ', '+')}"
+                    try:
+                        method = 2
+                        query = choice(queries)
+                        keyword = query[0]
+                        video_title = query[1]
+                        url = f"https://www.youtube.com/results?search_query={keyword.replace(' ', '+')}"
+                    except:
+                        raise SearchError
 
                 # driver.get('https://ipof.me')
                 # sleep(30)
@@ -445,7 +490,7 @@ def main_viewer(proxy_type, proxy, position):
                     }, 3000)
                     })(10);
                     """)
-                
+
                 except:
                     pass
 
@@ -453,7 +498,10 @@ def main_viewer(proxy_type, proxy, position):
                     skip_initial_ad(driver, position)
 
                 else:
-                    search_video(driver, query)
+                    scroll = search_video(driver, video_title)
+                    if scroll == 10:
+                        raise QueryError
+
                     skip_initial_ad(driver, position)
 
                 check_state(driver)
@@ -483,23 +531,31 @@ def main_viewer(proxy_type, proxy, position):
                 print(timestamp() + bcolors.OKCYAN +
                       f'View added : {len(view)}' + bcolors.ENDC)
 
-                status = 400
-                try:
-                    os.remove(pluginfile)
-                except:
-                    pass
+                status = quit_driver(driver, pluginfile)
+
+            except UrlsError:
+                print(timestamp() + bcolors.FAIL +
+                      f"Tried {position+1} | Your urls.txt is empty!" + bcolors.ENDC)
+                status = quit_driver(driver, pluginfile)
+                pass
+
+            except SearchError:
+                print(timestamp() + bcolors.FAIL +
+                      f"Tried {position+1} | Your search.txt is empty!" + bcolors.ENDC)
+                status = quit_driver(driver, pluginfile)
+                pass
+
+            except QueryError:
+                print(timestamp() + bcolors.FAIL +
+                      f"Tried {position+1} | Can't find this [{video_title}] video with this keyword [{keyword}]" + bcolors.ENDC)
+                status = quit_driver(driver, pluginfile)
+                pass
 
             except Exception as e:
-                try:
-                    os.remove(pluginfile)
-                except:
-                    pass
                 *_, exc_tb = sys.exc_info()
                 print(timestamp() + bcolors.FAIL +
                       f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " + str(e) + bcolors.ENDC)
-                driver.quit()
-                status = 400
-
+                status = quit_driver(driver, pluginfile)
                 pass
 
     except:
@@ -552,8 +608,8 @@ if __name__ == '__main__':
 
     views = int(input(bcolors.OKBLUE + 'Amount of views : ' + bcolors.ENDC))
 
-    category = input(bcolors.WARNING +
-                     "What's your proxy category? [F = Free (without user:pass), P = Premium (with user:pass), R = Rotating Proxy] : " + bcolors.ENDC).lower()
+    category = input(bcolors.WARNING + "What's your proxy category? " +
+                     "[F = Free (without user:pass), P = Premium (with user:pass), R = Rotating Proxy] : " + bcolors.ENDC).lower()
 
     if category == 'f':
         handle_proxy = str(input(
@@ -586,7 +642,8 @@ if __name__ == '__main__':
                 elif handle_proxy == '3':
                     proxy_type = 'socks5'
                 else:
-                    print('Please input 1 for HTTP, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
+                    print(
+                        'Please input 1 for HTTP, 2 for SOCKS4 and 3 for SOCKS5 proxy type')
                     sys.exit()
         else:
             proxy_list = load_proxy()
