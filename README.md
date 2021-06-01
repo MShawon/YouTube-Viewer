@@ -28,6 +28,7 @@ Simple program to increase YouTube views written in Python.
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
 # Important Update
+ * Prevent ip leaks by disabling webrtc using this extension [WebRTC Control](https://chrome.google.com/webstore/detail/webrtc-control/fjkmabmdepjfammlpliljpnbhleegehm/RK%3D2/RS%3Dzyer1MarhiTr.5w6le7XrnUsvUA-)
  * search.txt needs to be completed in this format `keyword :::: exact video title`. This fixes a bug that occurs when the video title contains ':'. So, instead of one ':' colon to separate keyword and title, update search.txt with four colons ( '::::' )  
  * This update only uses selenium. So, random referer is deprecated and proxies with authentication for **socks** proxies are not possible anymore. For premium **socks** proxies please authenticate your IP in your proxy provider service and use the free proxy category in the script.
  * Sound will be automatically muted.

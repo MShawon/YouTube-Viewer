@@ -75,7 +75,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.3.1'
+SCRIPT_VERSION = '1.3.2'
 
 api_url = 'https://api.github.com/repos/MShawon/YouTube-Viewer/releases/latest'
 response = requests.get(api_url, timeout=30)
@@ -96,7 +96,9 @@ auth_required = False
 view = []
 duration_dict = {}
 checked = {}
+webrtc = os.path.join('extension', 'webrtc_control.zip')
 
+WIDTH = 0
 VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
             '1536,864', '1366,768', '1280,1024', '1024,768']
 
@@ -135,11 +137,6 @@ major_version = version.split('.')[0]
 uc.TARGET_VERSION = major_version
 
 uc.install()
-
-try:
-    os.makedirs('extension')
-except OSError:
-    pass
 
 
 class UrlsError(Exception):
@@ -261,9 +258,10 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument(f"user-agent={agent}")
     options.add_argument("--mute-audio")
-    options.add_argument("--disable-web-security")
+    options.add_argument('--disable-features=UserAgentClientHint')
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
         'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
+    options.add_extension(webrtc)
 
     if auth_required:
         proxy = proxy.replace('@', ':')
@@ -336,15 +334,51 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
 def bypass_consent(driver):
     try:
         consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle")))
+        driver.execute_script("arguments[0].scrollIntoView();", consent)
+        consent.click()
+    except:
+        consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
             (By.XPATH, "//input[@type='submit' and @value='I agree']")))
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.submit()
-    except:
-        consent = driver.find_element_by_css_selector(
-            'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle')
-        driver.execute_script("arguments[0].scrollIntoView();", consent)
-        consent.click()
 
+
+def bypass_signin(driver):
+    for _ in range(10):
+        sleep(2)
+        try:
+            nothanks = driver.find_element_by_class_name("style-scope.yt-button-renderer.style-text.size-small")
+            nothanks.click()
+            sleep(1)
+            driver.switch_to.frame(driver.find_element_by_id("iframe"))
+            driver.find_element_by_id('introAgreeButton').click()
+            driver.switch_to.default_content()
+        except:
+            try:
+                driver.switch_to.frame(driver.find_element_by_id("iframe"))
+                driver.find_element_by_id('introAgreeButton').click()
+                driver.switch_to.default_content()
+            except:
+                pass
+
+
+def skip_initial_ad(driver, position):
+    try:
+        skip_ad = WebDriverWait(driver, 45).until(EC.element_to_be_clickable(
+            (By.CLASS_NAME, "ytp-ad-skip-button-container")))
+        if skip_ad:
+            print(timestamp() + bcolors.OKBLUE +
+                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+            ad_duration = driver.find_element_by_class_name(
+                'ytp-time-duration').get_attribute('innerText')
+            ad_duration = sum(x * int(t)
+                              for x, t in zip([60, 1], ad_duration.split(":")))
+            ad_duration = ad_duration * uniform(.01, .1)
+            sleep(ad_duration)
+            skip_ad.click()
+    except:
+        pass
 
 
 def search_video(driver, video_title):
@@ -355,6 +389,8 @@ def search_video(driver, video_title):
                 (By.XPATH, f'//ytd-item-section-renderer[{i}]')))
             find_video = section.find_element_by_xpath(
                 f'//*[@title="{video_title}"]')
+            driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", find_video)
+            sleep(1)
             find_video.click()
             break
         except NoSuchElementException:
@@ -381,24 +417,6 @@ def check_state(driver):
 
 
 
-def skip_initial_ad(driver, position):
-    try:
-        skip_ad = WebDriverWait(driver, 45).until(EC.element_to_be_clickable(
-            (By.CLASS_NAME, "ytp-ad-skip-button-container")))
-        if skip_ad:
-            print(timestamp() + bcolors.OKBLUE +
-                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
-            ad_duration = driver.find_element_by_class_name(
-                'ytp-time-duration').get_attribute('innerText')
-            ad_duration = sum(x * int(t)
-                              for x, t in zip([60, 1], ad_duration.split(":")))
-            ad_duration = ad_duration * uniform(.01, .1)
-            sleep(ad_duration)
-            skip_ad.click()
-    except:
-        pass
-
-
 def quit_driver(driver, pluginfile):
     try:
         os.remove(pluginfile)
@@ -416,6 +434,8 @@ def sleeping():
 
 def main_viewer(proxy_type, proxy, position):
     try:
+        global WIDTH
+        global VIEWPORT
 
         checked[position] = None
 
@@ -466,33 +486,7 @@ def main_viewer(proxy_type, proxy, position):
                           f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
                     bypass_consent(driver)
 
-                try:
-                    driver.execute_script("""
-                    (function myLoop(i) {
-                    setTimeout(function() {
-                        try{
-                            var nothanks, iagree;
-                            nothanks = document.getElementsByClassName('style-scope yt-button-renderer style-text size-small')[0];
-                            nothanks.click()
-                            iagree = document.getElementsByTagName('iframe')[1].contentDocument.getElementById('introAgreeButton');
-                            iagree.click()
-                        }
-                        catch(err){
-                            try{
-                                iagree = document.getElementsByTagName('iframe')[1].contentDocument.getElementById('introAgreeButton');
-                                iagree.click()
-                            }
-                            catch(err){
-                            }
-
-                        }
-                        if (--i) myLoop(i);
-                    }, 3000)
-                    })(10);
-                    """)
-
-                except:
-                    pass
+                bypass_signin(driver)
 
                 if method == 1:
                     skip_initial_ad(driver, position)
@@ -523,6 +517,10 @@ def main_viewer(proxy_type, proxy, position):
                       f"{proxy} --> Video Found : {url} | Watch Duration : {duration} " + bcolors.ENDC)
 
                 check_state(driver)
+
+                if WIDTH == 0:
+                    WIDTH = driver.execute_script('return screen.width')
+                    VIEWPORT = [i for i in VIEWPORT if int(i[:4]) <= WIDTH]
 
                 sleep(video_len)
                 driver.quit()
