@@ -30,7 +30,7 @@ import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from random import choice, uniform
+from random import choice, randint, uniform
 from time import gmtime, sleep, strftime
 
 import requests
@@ -75,7 +75,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.3.2'
+SCRIPT_VERSION = '1.3.3'
 
 api_url = 'https://api.github.com/repos/MShawon/YouTube-Viewer/releases/latest'
 response = requests.get(api_url, timeout=30)
@@ -97,6 +97,7 @@ view = []
 duration_dict = {}
 checked = {}
 webrtc = os.path.join('extension', 'webrtc_control.zip')
+canvas = os.path.join('extension', 'canvas_fingerprint_defender.zip')
 
 WIDTH = 0
 VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
@@ -144,6 +145,10 @@ class UrlsError(Exception):
 
 
 class SearchError(Exception):
+    pass
+
+
+class CaptchaError(Exception):
     pass
 
 
@@ -262,6 +267,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
         'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
     options.add_extension(webrtc)
+    options.add_extension(canvas)
 
     if auth_required:
         proxy = proxy.replace('@', ':')
@@ -352,12 +358,14 @@ def bypass_signin(driver):
             nothanks.click()
             sleep(1)
             driver.switch_to.frame(driver.find_element_by_id("iframe"))
-            driver.find_element_by_id('introAgreeButton').click()
+            iagree = driver.find_element_by_id('introAgreeButton')
+            iagree.click()
             driver.switch_to.default_content()
         except:
             try:
                 driver.switch_to.frame(driver.find_element_by_id("iframe"))
-                driver.find_element_by_id('introAgreeButton').click()
+                iagree = driver.find_element_by_id('introAgreeButton')
+                iagree.click()
                 driver.switch_to.default_content()
             except:
                 pass
@@ -365,7 +373,7 @@ def bypass_signin(driver):
 
 def skip_initial_ad(driver, position):
     try:
-        skip_ad = WebDriverWait(driver, 45).until(EC.element_to_be_clickable(
+        skip_ad = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
             (By.CLASS_NAME, "ytp-ad-skip-button-container")))
         if skip_ad:
             print(timestamp() + bcolors.OKBLUE +
@@ -381,7 +389,23 @@ def skip_initial_ad(driver, position):
         pass
 
 
-def search_video(driver, video_title):
+def search_video(driver, keyword, video_title):
+    try:
+        input_keyword = driver.find_element_by_css_selector('input#search')
+
+        for letter in keyword:
+            input_keyword.send_keys(letter)
+            sleep(uniform(.1, .5))
+
+        method = randint(1,2)
+        if method == 1:
+            input_keyword.send_keys(Keys.ENTER)
+        else:
+            driver.find_element_by_xpath('//*[@id="search-icon-legacy"]').click()
+    
+    except:
+        return 0
+
     i = 1
     for i in range(1, 11):
         try:
@@ -463,6 +487,7 @@ def main_viewer(proxy_type, proxy, position):
                     try:
                         method = 1
                         url = choice(urls)
+                        output = url
                     except:
                         raise UrlsError
 
@@ -472,11 +497,12 @@ def main_viewer(proxy_type, proxy, position):
                         query = choice(queries)
                         keyword = query[0]
                         video_title = query[1]
-                        url = f"https://www.youtube.com/results?search_query={keyword.replace(' ', '+')}"
+                        url = "https://www.youtube.com"
+                        output = video_title
                     except:
                         raise SearchError
 
-                # driver.get('https://ipof.me')
+                # driver.get('http://httpbin.org/ip')
                 # sleep(30)
 
                 driver.get(url)
@@ -492,11 +518,19 @@ def main_viewer(proxy_type, proxy, position):
                     skip_initial_ad(driver, position)
 
                 else:
-                    scroll = search_video(driver, video_title)
-                    if scroll == 10:
+                    scroll = search_video(driver, keyword, video_title)
+                    if scroll == 0:
+                        raise CaptchaError
+                    elif scroll == 10:
                         raise QueryError
 
                     skip_initial_ad(driver, position)
+
+                
+                try:
+                    driver.find_element_by_xpath('//ytd-player[@id="ytd-player"]')
+                except:
+                    raise CaptchaError
 
                 check_state(driver)
 
@@ -514,7 +548,7 @@ def main_viewer(proxy_type, proxy, position):
 
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
-                      f"{proxy} --> Video Found : {url} | Watch Duration : {duration} " + bcolors.ENDC)
+                      f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
 
                 check_state(driver)
 
@@ -540,6 +574,12 @@ def main_viewer(proxy_type, proxy, position):
             except SearchError:
                 print(timestamp() + bcolors.FAIL +
                       f"Tried {position+1} | Your search.txt is empty!" + bcolors.ENDC)
+                status = quit_driver(driver, pluginfile)
+                pass
+
+            except CaptchaError:
+                print(timestamp() + bcolors.FAIL +
+                      f"Tried {position+1} | Slow internet speed or Stuck at recaptcha! Can't load YouTube..." + bcolors.ENDC)
                 status = quit_driver(driver, pluginfile)
                 pass
 
