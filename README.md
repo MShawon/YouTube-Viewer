@@ -40,6 +40,12 @@ Simple program to increase YouTube views written in Python.
  * Google Chrome installed on your OS (not Chromium)
  * Chrome driver will be downloaded automatically by undetected-chromedriver
 
+# HTTP API
+   Live logs fetched every 10 seconds and statistics in graphs are available on http://localhost:5000/ .Or [http://ip_of_your_pc:5000/](http://ip_of_your_pc:5000/) use this to access from another device under same network. A SQLite Database is being used  to store your generated views from this script
+
+# Config.json
+   No need to type everything everytime you run the script. A config file will be created automatically to save and use your preferences.
+
 # Proxies
  Buy premium proxies from my referral link : [Webshare](https://www.webshare.io/?referral_code=8hd5him4soj1)
 

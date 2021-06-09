@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 import concurrent.futures.thread
 import os
 import shutil
@@ -118,6 +117,9 @@ def mainChecker(proxy_type, proxy, position):
         response = requests.get(
             'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
         status = response.status_code
+
+        if status != 200:
+            raise Exception
 
         print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.OKGREEN +
               f' {proxy} | GOOD | Type : {proxy_type} | Response : {status}' + bcolors.ENDC)
