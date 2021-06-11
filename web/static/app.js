@@ -1,25 +1,4 @@
-$(document).ready(function () {
-
-    setInterval(function () {
-
-        req = $.ajax({
-            url: '/update',
-            type: 'POST',
-        });
-
-        req.done(function (data) {
-
-            var i;
-            for (i = 1; i < 21; i++) {
-                $('#logs-' + i).html(data.console[i - 1]);
-            }
-        });
-
-
-    }, 10000);
-
-});
-
+// google chart area graph function
 function graph(chart_data, total, first, last) {
     google.charts.load('current', { 'packages': ['corechart'] });
     google.charts.setOnLoadCallback(drawChart);
@@ -40,35 +19,72 @@ function graph(chart_data, total, first, last) {
 }
 
 
-$(document).ready(function () {
+// get graph data from python
+function queryGraphData(text) {
     req = $.ajax({
         url: '/graph',
         type: 'POST',
         contentType: "application/json; charset=utf-8",
-        data: JSON.stringify({ query: "Last 7 days" })
+        data: JSON.stringify({ query: text })
     });
 
     req.done(function (data) {
         graph(data['graph_data'], data['total'], data['first'], data['last'])
 
     });
+}
+
+
+// get console outputs from python
+function queryLogs() {
+    req = $.ajax({
+        url: '/update',
+        type: 'POST',
+    });
+
+    req.done(function (data) {
+        var i;
+        for (i = 1; i < 21; i++) {
+            $('#logs-' + i).html(data.console[i - 1]);
+        }
+    });
+}
+
+
+// update python logs on page load
+$(document).ready(function () {
+        queryLogs()
 });
 
 
+// update python logs every 10 seconds
+$(document).ready(function () {
+    setInterval(function () {
+        queryLogs()
+    }, 10000);
+});
+
+
+// draw graph on page load for last 7 days
+$(document).ready(function () {
+    queryGraphData('Last 7 days');
+});
+
+
+// update graph every 5 minutes
+$(document).ready(function () {
+    setInterval(function () {
+        var selText = $('#dropdownMenuButton').text();
+
+        queryGraphData(selText);
+    }, 300000);
+});
+
+
+// change graph according to drop down data selected by user
 $(".dropdown-menu a").click(function () {
     var selText = $(this).text();
     $(this).parents('.dropdown').find('.dropdown-toggle').html(selText);
 
-    req = $.ajax({
-        url: '/graph',
-        type: 'POST',
-        contentType: "application/json; charset=utf-8",
-        data: JSON.stringify({ query: selText })
-    });
-
-    req.done(function (data) {
-
-        graph(data['graph_data'], data['total'], data['first'], data['last'])
-
-    });
+    queryGraphData(selText);
 });

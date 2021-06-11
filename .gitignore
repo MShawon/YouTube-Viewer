@@ -1,5 +1,6 @@
 .venv/
 .vscode/
+__pycache__/
 web/database.db
 web/database_backup.db
 config.json

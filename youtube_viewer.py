@@ -22,10 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import calendar
 import concurrent.futures.thread
 import json
-import logging
 import os
 import platform
 import shutil
@@ -35,14 +33,13 @@ import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import closing
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from random import choice, randint, uniform
 from time import gmtime, sleep, strftime
 
 import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers
-from flask import Flask, jsonify, render_template, request
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -50,6 +47,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+import website
 from config import create_config
 
 os.system("")
@@ -84,7 +82,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.0'
+SCRIPT_VERSION = '1.4.1'
 
 proxy = None
 driver = None
@@ -97,16 +95,17 @@ checked = {}
 console = []
 
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
-CANVAS = os.path.join('extension', 'canvas_fingerprint_defender.zip')
-DATABASE = os.path.join('web', 'database.db')
-DATABASE_BACKUP = os.path.join('web', 'database_backup.db')
+FINGERPRINT = os.path.join('extension', 'fingerprint_defender.crx')
+TIMEZONE = os.path.join('extension', 'spoof_timezone.crx')
+DATABASE = 'database.db'
+DATABASE_BACKUP = 'database_backup.db'
 
 WIDTH = 0
 VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
             '1536,864', '1366,768', '1280,1024', '1024,768']
 
-MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December']
+website.console = console
+website.database = DATABASE
 
 
 class UrlsError(Exception):
@@ -197,112 +196,36 @@ def create_database():
         pass
 
 
-def create_graph_data(dropdown_text):
-
-    now = datetime.now()
-    day = now.day
-    month = now.month
-    year = now.year
-    today = now.date()
-    days = False
-    number = False
-    try:
-        number = [int(s) for s in dropdown_text.split() if s.isdigit()][0]
-    except:
-        pass
-
-    if number:
-        if dropdown_text.startswith('Last'):
-            days = number
-        else:
-            month = MONTHS.index(dropdown_text[:-5]) + 1
-            year = number
-    else:
-        month = MONTHS.index(dropdown_text) + 1
-
-    query_days = []
-
-    if days:
-        for i in range(days):
-            day = today - timedelta(days=i)
-            query_days.append(str(day))
-        query_days.reverse()
-
-    else:
-        num_days = calendar.monthrange(year, month)[1]
-        for day in range(1, num_days+1):
-            query_days.append(str(date(year, month, day)))
-
-    first_date = query_days[0]
-    last_date = query_days[-1]
-
-    graph_data = [['Date', 'Views']]
-    total = 0
-    with closing(sqlite3.connect(DATABASE, timeout=30)) as connection:
+def update_database():
+    today = str(datetime.today().date())
+    with closing(sqlite3.connect(DATABASE, timeout=threads*10)) as connection:
         with closing(connection.cursor()) as cursor:
-            for i in query_days:
-                view = cursor.execute(
-                    "SELECT view FROM statistics WHERE date = ?", (i,),).fetchall()
-                if view:
-                    graph_data.append([i[-2:], view[0][0]])
-                    total += view[0][0]
-                else:
-                    graph_data.append([i[-2:], 0])
+            try:
+                cursor.execute(
+                    "SELECT view FROM statistics WHERE date = ?", (today,))
+                previous_count = cursor.fetchone()[0]
+                cursor.execute("UPDATE statistics SET view = ? WHERE date = ?",
+                        (previous_count + 1, today))                    
+            except:
+                cursor.execute(
+                    "INSERT INTO statistics VALUES (?, ?)", (today, 0),)
 
-    return graph_data, total, first_date, last_date
-
-
-def create_dropdown_data():
-    dropdown = ['Last 7 days', 'Last 28 days', 'Last 90 days']
-    now = datetime.now()
-    current_year = now.year
-    dropdown.append(now.strftime("%B"))
-
-    for _ in range(0, 12):
-        now = now.replace(day=1) - timedelta(days=1)
-        if current_year == now.year:
-            dropdown.append(now.strftime("%B"))
-        else:
-            dropdown.append(now.strftime("%B %Y"))
-
-    return dropdown
+            connection.commit()
 
 
-def start_server():
-    app = Flask(__name__,
-                static_url_path='',
-                static_folder='web/static',
-                template_folder='web/templates')
+def create_html(text_dict):
+    global console
 
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
+    if len(console)>50:
+        console.pop(0)
+
+    date_fmt = f'<span style="color:#23d18b"> [{datetime.now().strftime("%d-%b-%Y %H:%M:%S")}] </span>'
+    str_fmt = ''.join(
+        [f'<span style="color:{key}"> {value} </span>' for key, value in text_dict.items()])
+    html = date_fmt + str_fmt
+
+    console.append(html)
     
-    # assume that your homepage shows the console output.
-    @app.route('/')
-    def home():
-        dropdown = create_dropdown_data()
-        return render_template('homepage.html', dropdownitems=dropdown)
-
-    @app.route('/update', methods=['POST'])
-    def update():
-        return jsonify({'result': 'success', 'console': console})
-
-    @app.route('/graph', methods=['GET', 'POST'])
-    def graph():
-        query = None
-        if request.method == 'POST':
-            query = request.json['query']
-            graph_data, total, first_date, last_date = create_graph_data(query)
-
-            return jsonify({
-                'graph_data': graph_data,
-                'total': total,
-                'first': first_date,
-                'last': last_date
-            })
-
-    app.run(host=host, port=port)
-
 
 def load_url():
     links = []
@@ -410,7 +333,8 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
 
     if not background:
         options.add_extension(WEBRTC)
-        options.add_extension(CANVAS)
+        options.add_extension(FINGERPRINT)
+        options.add_extension(TIMEZONE)
 
     if auth_required:
         proxy = proxy.replace('@', ':')
@@ -523,8 +447,7 @@ def skip_initial_ad(driver, position):
             print(timestamp() + bcolors.OKBLUE +
                   f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
 
-            create_html({"#3b8eea": f"Tried {position+1} | ",
-                         "#23d18b": f"Tried {position+1} | Skipping Ads..."})
+            create_html({"#23d18b": f"Tried {position+1} | Skipping Ads..."})
 
             ad_duration = driver.find_element_by_class_name(
                 'ytp-time-duration').get_attribute('innerText')
@@ -606,38 +529,11 @@ def save_bandwidth(driver):
         quality.click()
 
     except:
-        driver.find_element_by_xpath(
-            '//*[@id="container"]/h1/yt-formatted-string').click()
-        pass
-
-
-def update_database(view_count):
-    today = str(datetime.today().date())
-    with closing(sqlite3.connect(DATABASE, timeout=30)) as connection:
-        with closing(connection.cursor()) as cursor:
-            cursor.execute(
-                "SELECT count(*) FROM statistics WHERE date = ?", (today,))
-            data = cursor.fetchone()[0]
-            if data == 0:
-                cursor.execute(
-                    "INSERT INTO statistics VALUES (?, ?)", (today, 0),)
-            else:
-                cursor.execute("UPDATE statistics SET view = ? WHERE date = ?",
-                               (view_count, today))
-
-            connection.commit()
-
-
-def create_html(text_dict):
-    global console
-
-    date_fmt = f'<span style="color:#23d18b"> [{datetime.now().strftime("%d-%b-%Y %H:%M:%S")}] </span>'
-    str_fmt = ''.join(
-        [f'<span style="color:{key}"> {value} </span>' for key, value in text_dict.items()])
-    html = date_fmt + str_fmt
-
-    console.append(html)
-    console = console[-20:]
+        try:
+            driver.find_element_by_xpath(
+                '//*[@id="container"]/h1/yt-formatted-string').click()
+        except:
+            pass
 
 
 def quit_driver(driver, pluginfile):
@@ -713,8 +609,8 @@ def main_viewer(proxy_type, proxy, position):
                     print(timestamp() + bcolors.OKBLUE +
                           f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
 
-                    create_html({"#3b8eea": f"Tried {position+1} | ",
-                                 "#3b8eea": f"Tried {position+1} | Bypassing consent..."})
+                    create_html(
+                        {"#3b8eea": f"Tried {position+1} | Bypassing consent..."})
 
                     bypass_consent(driver)
 
@@ -757,7 +653,7 @@ def main_viewer(proxy_type, proxy, position):
                       f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
 
                 create_html({"#3b8eea": f"Tried {position+1} | ",
-                             "#3b8eea": f"{proxy} --> Video Found : {output} | Watch Duration : {duration} "})
+                             "#23d18b": f"{proxy} --> Video Found : {output} | Watch Duration : {duration} "})
 
                 if bandwidth:
                     save_bandwidth(driver)
@@ -779,14 +675,18 @@ def main_viewer(proxy_type, proxy, position):
                     break
 
                 view.append(position)
-                print(timestamp() + bcolors.OKCYAN +
-                      f'View added : {len(view)}' + bcolors.ENDC)
 
-                create_html({"#3b8eea": f"Tried {position+1} | ",
-                             "#29b2d3": f'View added : {len(view)}'})
+                view_count = len(view)
+                print(timestamp() + bcolors.OKCYAN +
+                      f'View added : {view_count}' + bcolors.ENDC)
+
+                create_html({"#29b2d3": f'View added : {view_count}'})
 
                 if database:
-                    update_database(view_count=len(view))
+                    try:
+                        update_database()
+                    except:
+                        pass
 
                 status = quit_driver(driver, pluginfile)
 
@@ -870,7 +770,7 @@ def view_video(position):
     else:
         if not server_running:
             server_running = True
-            start_server()
+            website.start_server(host=host, port=port)
 
 
 def main():
@@ -937,7 +837,6 @@ if __name__ == '__main__':
             proxy_list = load_proxy(filename)
     else:
         proxy_list = gather_proxy()
-
 
     proxy_list = list(filter(None, proxy_list))  # removing empty lines
 
