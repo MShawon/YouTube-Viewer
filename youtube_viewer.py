@@ -24,6 +24,7 @@ SOFTWARE.
 
 import concurrent.futures.thread
 import json
+import logging
 import os
 import platform
 import shutil
@@ -49,6 +50,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import website
 from config import create_config
+
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 os.system("")
 
@@ -82,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.1'
+SCRIPT_VERSION = '1.4.2'
 
 proxy = None
 driver = None
@@ -647,7 +651,7 @@ def main_viewer(proxy_type, proxy, position):
                     duration_dict[url] = video_len
 
                 video_len = video_len*uniform(.85, .95)
-
+                
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
                       f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
@@ -664,15 +668,14 @@ def main_viewer(proxy_type, proxy, position):
                     WIDTH = driver.execute_script('return screen.width')
                     VIEWPORT = [i for i in VIEWPORT if int(i[:4]) <= WIDTH]
 
-                while True:
+                loop = int(video_len/4)
+                for _ in range(loop):
                     sleep(5)
                     current_time = driver.execute_script(
                         "return document.getElementById('movie_player').getCurrentTime()")
 
-                    if current_time < video_len:
-                        continue
-
-                    break
+                    if current_time > video_len:
+                        break
 
                 view.append(position)
 
@@ -768,7 +771,7 @@ def view_video(position):
                 main_viewer('socks5', proxy, position)
 
     else:
-        if not server_running:
+        if api and not server_running:
             server_running = True
             website.start_server(host=host, port=port)
 

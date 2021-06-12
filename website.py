@@ -1,5 +1,4 @@
 import calendar
-import logging
 import sqlite3
 from contextlib import closing
 from datetime import date, datetime, timedelta
@@ -11,7 +10,7 @@ MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
 
 global console
 console = []
-database = None
+database = 'database.db'
 
 def create_graph_data(dropdown_text):
 
@@ -93,9 +92,6 @@ def start_server(host, port):
                 static_url_path='',
                 static_folder='web/static',
                 template_folder='web/templates')
-
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
 
     @app.route('/')
     def home():
