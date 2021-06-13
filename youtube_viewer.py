@@ -40,7 +40,7 @@ from time import gmtime, sleep, strftime
 
 import requests
 import undetected_chromedriver as uc
-from fake_headers import Headers
+from fake_headers import Headers, browsers
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -86,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.2'
+SCRIPT_VERSION = '1.4.3'
 
 proxy = None
 driver = None
@@ -110,6 +110,13 @@ VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
 
 website.console = console
 website.database = DATABASE
+
+link = 'https://gist.githubusercontent.com/MShawon/29e185038f22e6ac5eac822a1e422e9d/raw/85c1e74ea5f958f952f0a88a836c437949d8b4e9/versions.txt'
+
+output = requests.get(link, timeout=60).text
+chrome_versions = output.split('\n')
+
+browsers.chrome_ver += chrome_versions
 
 
 class UrlsError(Exception):
@@ -415,8 +422,7 @@ def bypass_consent(driver):
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.click()
     except:
-        consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
-            (By.XPATH, "//input[@type='submit' and @value='I agree']")))
+        consent = driver.find_element_by_xpath("//input[@type='submit' and @value='I agree']")
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.submit()
 
@@ -443,20 +449,22 @@ def bypass_signin(driver):
                 pass
 
 
-def skip_initial_ad(driver, position):
+def skip_initial_ad(driver, position, video):
     try:
-        skip_ad = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-            (By.CLASS_NAME, "ytp-ad-skip-button-container")))
-        if skip_ad:
+        video_len = duration_dict[video]
+        if video_len > 60:
+            skip_ad = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                (By.CLASS_NAME, "ytp-ad-skip-button-container")))
+
             print(timestamp() + bcolors.OKBLUE +
-                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+                f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
 
             create_html({"#23d18b": f"Tried {position+1} | Skipping Ads..."})
 
             ad_duration = driver.find_element_by_class_name(
                 'ytp-time-duration').get_attribute('innerText')
             ad_duration = sum(x * int(t)
-                              for x, t in zip([60, 1], ad_duration.split(":")))
+                            for x, t in zip([60, 1], ad_duration.split(":")))
             ad_duration = ad_duration * uniform(.01, .1)
             sleep(ad_duration)
             skip_ad.click()
@@ -495,10 +503,10 @@ def search_video(driver, keyword, video_title):
             find_video.click()
             break
         except NoSuchElementException:
+            sleep(5)
             WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                 (By.TAG_NAME, 'body'))).send_keys(Keys.CONTROL, Keys.END)
-            sleep(5)
-
+                
     return i
 
 
@@ -618,10 +626,8 @@ def main_viewer(proxy_type, proxy, position):
 
                     bypass_consent(driver)
 
-                bypass_signin(driver)
-
                 if method == 1:
-                    skip_initial_ad(driver, position)
+                    skip_initial_ad(driver, position, output)
 
                 else:
                     scroll = search_video(driver, keyword, video_title)
@@ -629,8 +635,10 @@ def main_viewer(proxy_type, proxy, position):
                         raise CaptchaError
                     elif scroll == 10:
                         raise QueryError
+                    else:
+                        pass
 
-                    skip_initial_ad(driver, position)
+                    skip_initial_ad(driver, position, output)
 
                 try:
                     driver.find_element_by_xpath(
@@ -641,14 +649,14 @@ def main_viewer(proxy_type, proxy, position):
                 check_state(driver)
 
                 try:
-                    video_len = duration_dict[url]
+                    video_len = duration_dict[output]
                 except KeyError:
                     video_len = 0
                     while video_len == 0:
                         video_len = driver.execute_script(
                             "return document.getElementById('movie_player').getDuration()")
 
-                    duration_dict[url] = video_len
+                    duration_dict[output] = video_len
 
                 video_len = video_len*uniform(.85, .95)
                 
@@ -755,26 +763,32 @@ def main_viewer(proxy_type, proxy, position):
         pass
 
 
+def call_viewer(position):
+    proxy = proxy_list[position]
+
+    if proxy_type:
+        main_viewer(proxy_type, proxy, position)
+    else:
+        main_viewer('http', proxy, position)
+        if checked[position] == 'http':
+            main_viewer('socks4', proxy, position)
+        if checked[position] == 'socks4':
+            main_viewer('socks5', proxy, position)
+
+
 def view_video(position):
     global server_running
 
-    proxy = proxy_list[position]
-
     if position != 0:
-        if proxy_type:
-            main_viewer(proxy_type, proxy, position)
-        else:
-            main_viewer('http', proxy, position)
-            if checked[position] == 'http':
-                main_viewer('socks4', proxy, position)
-            if checked[position] == 'socks4':
-                main_viewer('socks5', proxy, position)
+        call_viewer(position)
 
     else:
         if api and not server_running:
             server_running = True
             website.start_server(host=host, port=port)
-
+        else:
+            call_viewer(position)
+            
 
 def main():
     pool_number = [i for i in range(total_proxies)]
@@ -807,6 +821,10 @@ if __name__ == '__main__':
     queries = load_search()
 
     if os.path.isfile('config.json'):
+        with open('config.json', 'r') as openfile:
+            config = json.load(openfile)
+        print(json.dumps(config, indent=4))
+
         previous = str(input(
             bcolors.OKBLUE + 'Config file exists! Do you want to continue with previous saved preferences ? [Yes/No] : ' + bcolors.ENDC)).lower()
         if previous == 'n' or previous == 'no':
