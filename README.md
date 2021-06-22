@@ -27,6 +27,13 @@ Simple program to increase YouTube views written in Python.
 
 **Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
 
+
+# Support
+   Consider a donation to keep this project alive and for the countless hours of works and testing :)
+   
+  **PayPal :** https://paypal.me/mshawon1
+  **Bitcoin :** `1Jh8KZ6khuHayNDeVV9tEzYSq9FPExKCAH`
+
 # View Decrease
  If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
 
@@ -136,11 +143,6 @@ Simple program to increase YouTube views written in Python.
         $ python3 youtube_viewer.py
         ```
    * Rest is self explanatory.
-
-# Donation
- If this project helps you in any way, you can give me a cup of coffee :grinning:
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://paypal.me/mshawon1)
  
 # Credits
 I want to thank all of you who have opened an issue or shared your ideas with me! 

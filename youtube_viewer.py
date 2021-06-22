@@ -86,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.3'
+SCRIPT_VERSION = '1.4.4'
 
 proxy = None
 driver = None
@@ -216,7 +216,7 @@ def update_database():
                     "SELECT view FROM statistics WHERE date = ?", (today,))
                 previous_count = cursor.fetchone()[0]
                 cursor.execute("UPDATE statistics SET view = ? WHERE date = ?",
-                        (previous_count + 1, today))                    
+                               (previous_count + 1, today))
             except:
                 cursor.execute(
                     "INSERT INTO statistics VALUES (?, ?)", (today, 0),)
@@ -227,7 +227,7 @@ def update_database():
 def create_html(text_dict):
     global console
 
-    if len(console)>50:
+    if len(console) > 50:
         console.pop(0)
 
     date_fmt = f'<span style="color:#23d18b"> [{datetime.now().strftime("%d-%b-%Y %H:%M:%S")}] </span>'
@@ -236,7 +236,7 @@ def create_html(text_dict):
     html = date_fmt + str_fmt
 
     console.append(html)
-    
+
 
 def load_url():
     links = []
@@ -415,16 +415,41 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     return driver
 
 
+def personalization(driver):
+    search = driver.find_element_by_xpath(
+        f'//button[@aria-label="Turn {choice(["on","off"])} Search customization"]')
+    driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", search)
+    search.click()
+
+    history = driver.find_element_by_xpath(
+        f'//button[@aria-label="Turn {choice(["on","off"])} YouTube History"]')
+    driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", history)
+    history.click()
+
+    ad = driver.find_element_by_xpath(
+        f'//button[@aria-label="Turn {choice(["on","off"])} Ad personalization"]')
+    driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", ad)
+    ad.click()
+
+    confirm = driver.find_element_by_xpath('//button[@jsname="j6LnYe"]')
+    driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", confirm)
+    confirm.click()
+
+
 def bypass_consent(driver):
     try:
-        consent = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.IIdkle")))
+        consent = driver.find_element_by_xpath("//button[@jsname='higCR']")
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.click()
+        if 'consent' in driver.current_url:
+            personalization(driver)
     except:
-        consent = driver.find_element_by_xpath("//input[@type='submit' and @value='I agree']")
+        consent = driver.find_element_by_xpath(
+            "//input[@type='submit' and @value='I agree']")
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.submit()
+        if 'consent' in driver.current_url:
+            personalization(driver)
 
 
 def bypass_signin(driver):
@@ -453,18 +478,18 @@ def skip_initial_ad(driver, position, video):
     try:
         video_len = duration_dict[video]
         if video_len > 60:
-            skip_ad = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+            skip_ad = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
                 (By.CLASS_NAME, "ytp-ad-skip-button-container")))
 
             print(timestamp() + bcolors.OKBLUE +
-                f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
 
             create_html({"#23d18b": f"Tried {position+1} | Skipping Ads..."})
 
             ad_duration = driver.find_element_by_class_name(
                 'ytp-time-duration').get_attribute('innerText')
             ad_duration = sum(x * int(t)
-                            for x, t in zip([60, 1], ad_duration.split(":")))
+                              for x, t in zip([60, 1], ad_duration.split(":")))
             ad_duration = ad_duration * uniform(.01, .1)
             sleep(ad_duration)
             skip_ad.click()
@@ -506,7 +531,7 @@ def search_video(driver, keyword, video_title):
             sleep(5)
             WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
                 (By.TAG_NAME, 'body'))).send_keys(Keys.CONTROL, Keys.END)
-                
+
     return i
 
 
@@ -659,7 +684,7 @@ def main_viewer(proxy_type, proxy, position):
                     duration_dict[output] = video_len
 
                 video_len = video_len*uniform(.85, .95)
-                
+
                 duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
                       f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
@@ -788,7 +813,7 @@ def view_video(position):
             website.start_server(host=host, port=port)
         else:
             call_viewer(position)
-            
+
 
 def main():
     pool_number = [i for i in range(total_proxies)]
