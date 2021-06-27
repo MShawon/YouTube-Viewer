@@ -21,7 +21,7 @@
                             YP    88 888888    YP  YP    888888 88  Yb
 
 # YouTube Viewer
-Simple program to increase YouTube views written in Python.
+Simple program to increase YouTube views written in Python. Works with live stream too.
 
 **Disclaimer:** This has been developed for educational purposes only. Any action you take using this script is strictly at your own risk. I will not be liable for any losses or damages you face using this script.
 
@@ -47,6 +47,10 @@ Simple program to increase YouTube views written in Python.
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
  * Chrome driver will be downloaded automatically by undetected-chromedriver
+
+# Live Stream
+   From now on, this script supports live streams too. Just use this script as you would for the already uploaded video. Script will automatically know if your video is live. Just bear in mind, you need a **high-end pc** for higher threads to get more viewers.
+   Basically, script will check every 60 secs if youtube shows `x watching now` is present. If your live stream ends, script will check 5 times to be sure. In another word, after your live stream ends, script takes 5 minutes to close the driver.
 
 # HTTP API
    Live logs fetched every 10 seconds and statistics in graphs are available on http://localhost:5000/ .Or [http://ip_of_your_pc:5000/](http://ip_of_your_pc:5000/) use this to access from another device under same network. A SQLite Database is being used  to store your generated views from this script. 
@@ -146,4 +150,4 @@ Simple program to increase YouTube views written in Python.
    * Rest is self explanatory.
  
 # Credits
-I want to thank all of you who have opened an issue or shared your ideas with me! 
+I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 

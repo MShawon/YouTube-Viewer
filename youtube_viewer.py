@@ -86,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.4'
+SCRIPT_VERSION = '1.4.5'
 
 proxy = None
 driver = None
@@ -99,6 +99,7 @@ checked = {}
 console = []
 
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
+ACTIVE = os.path.join('extension', 'always_active.zip')
 FINGERPRINT = os.path.join('extension', 'fingerprint_defender.crx')
 TIMEZONE = os.path.join('extension', 'spoof_timezone.crx')
 DATABASE = 'database.db'
@@ -107,6 +108,11 @@ DATABASE_BACKUP = 'database_backup.db'
 WIDTH = 0
 VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
             '1536,864', '1366,768', '1280,1024', '1024,768']
+
+CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
+        '{8237E44A-0054-442C-B6B6-EA0509993955}',
+        '{401C381F-E0DE-4B85-8BD8-3F3F14FBDA57}',
+        '{4ea16ac7-fd5a-47c3-875b-dbf4a2008c20}']
 
 website.console = console
 website.database = DATABASE
@@ -168,11 +174,31 @@ def download_driver():
             'UTF-8').replace('Google Chrome', '').strip()
     elif OSNAME == 'Windows':
         OSNAME = 'win'
-        process = subprocess.Popen(
-            ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
-        )
-        version = process.communicate()[0].decode('UTF-8').strip().split()[-1]
+        version = None
+        try:
+            process = subprocess.Popen(
+                ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
+            )
+            version = process.communicate()[0].decode('UTF-8').strip().split()[-1]
+        except:
+            for i in CHROME:
+                for j in ['opv', 'pv']:
+                    try:
+                        command = [
+                            'reg', 'query', f'HKEY_LOCAL_MACHINE\\Software\\Google\\Update\\Clients\\{i}', '/v', f'{j}', '/reg:32']
+                        process = subprocess.Popen(
+                            command,
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
+                        )
+                        version = process.communicate()[0].decode(
+                            'UTF-8').strip().split()[-1]
+                    except:
+                        pass
+        
+        if not version:
+            version = input(bcolors.WARNING +
+                'Please input your google chrome version (91.0.4472.114) : ' + bcolors.ENDC)
     else:
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
@@ -344,6 +370,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
 
     if not background:
         options.add_extension(WEBRTC)
+        options.add_extension(ACTIVE)
         options.add_extension(FINGERPRINT)
         options.add_extension(TIMEZONE)
 
@@ -498,12 +525,13 @@ def skip_initial_ad(driver, position, video):
 
 
 def search_video(driver, keyword, video_title):
+    i = 0
     try:
         input_keyword = driver.find_element_by_css_selector('input#search')
 
         for letter in keyword:
             input_keyword.send_keys(letter)
-            sleep(uniform(.1, .5))
+            sleep(uniform(.1, .4))
 
         method = randint(1, 2)
         if method == 1:
@@ -513,9 +541,8 @@ def search_video(driver, keyword, video_title):
                 '//*[@id="search-icon-legacy"]').click()
 
     except:
-        return 0
+        return i
 
-    i = 1
     for i in range(1, 11):
         try:
             section = WebDriverWait(driver, 60).until(EC.element_to_be_clickable(
@@ -615,7 +642,6 @@ def main_viewer(proxy_type, proxy, position):
                 pluginfile = os.path.join(
                     'extension', f'proxy_auth_plugin{position}.zip')
 
-                driver = get_driver(agent, proxy, proxy_type, pluginfile)
                 url = ''
 
                 if position % 2:
@@ -636,6 +662,8 @@ def main_viewer(proxy_type, proxy, position):
                         output = video_title
                     except:
                         raise SearchError
+
+                driver = get_driver(agent, proxy, proxy_type, pluginfile)
 
                 # driver.get('http://httpbin.org/ip')
                 # sleep(30)
@@ -666,8 +694,8 @@ def main_viewer(proxy_type, proxy, position):
                     skip_initial_ad(driver, position, output)
 
                 try:
-                    driver.find_element_by_xpath(
-                        '//ytd-player[@id="ytd-player"]')
+                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                        (By.XPATH, '//ytd-player[@id="ytd-player"]')))
                 except:
                     raise CaptchaError
 
@@ -683,15 +711,6 @@ def main_viewer(proxy_type, proxy, position):
 
                     duration_dict[output] = video_len
 
-                video_len = video_len*uniform(.85, .95)
-
-                duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
-                print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
-                      f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
-
-                create_html({"#3b8eea": f"Tried {position+1} | ",
-                             "#23d18b": f"{proxy} --> Video Found : {output} | Watch Duration : {duration} "})
-
                 if bandwidth:
                     save_bandwidth(driver)
 
@@ -701,14 +720,43 @@ def main_viewer(proxy_type, proxy, position):
                     WIDTH = driver.execute_script('return screen.width')
                     VIEWPORT = [i for i in VIEWPORT if int(i[:4]) <= WIDTH]
 
-                loop = int(video_len/4)
-                for _ in range(loop):
-                    sleep(5)
-                    current_time = driver.execute_script(
-                        "return document.getElementById('movie_player').getCurrentTime()")
+                view_stat = WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
+                    (By.XPATH, '//span[@class="view-count style-scope ytd-video-view-count-renderer"]'))).text
+                    
+                if 'watching' in view_stat:
+                    error = 0
+                    while True:
+                        view_stat = driver.find_element_by_xpath(
+                            '//span[@class="view-count style-scope ytd-video-view-count-renderer"]').text
+                        if 'watching' in view_stat:
+                            print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN + 
+                                f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
 
-                    if current_time > video_len:
-                        break
+                            create_html({"#3b8eea": f"Tried {position+1} | ",
+                                        "#23d18b": f"{proxy} | {output} | ", "#29b2d3": f"{view_stat} "})
+                        else:
+                            error += 1
+                        if error == 5:
+                            break
+                        sleep(60)
+                
+                else:
+                    video_len = video_len*uniform(.85, .95)
+
+                    duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
+                    print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                        f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
+
+                    create_html({"#3b8eea": f"Tried {position+1} | ",
+                                "#23d18b": f"{proxy} --> Video Found : {output} | Watch Duration : {duration} "})
+
+                    loop = int(video_len/4)
+                    for _ in range(loop):
+                        sleep(5)
+                        current_time = driver.execute_script(
+                            "return document.getElementById('movie_player').getCurrentTime()")
+                        if current_time > video_len:
+                            break
 
                 view.append(position)
 
@@ -733,7 +781,7 @@ def main_viewer(proxy_type, proxy, position):
                 create_html(
                     {"#f14c4c": f"Tried {position+1} | Your urls.txt is empty!"})
 
-                status = quit_driver(driver, pluginfile)
+                status = 400
                 pass
 
             except SearchError:
@@ -743,7 +791,7 @@ def main_viewer(proxy_type, proxy, position):
                 create_html(
                     {"#f14c4c": f"Tried {position+1} | Your search.txt is empty!"})
 
-                status = quit_driver(driver, pluginfile)
+                status = 400
                 pass
 
             except CaptchaError:
@@ -788,31 +836,25 @@ def main_viewer(proxy_type, proxy, position):
         pass
 
 
-def call_viewer(position):
-    proxy = proxy_list[position]
-
-    if proxy_type:
-        main_viewer(proxy_type, proxy, position)
-    else:
-        main_viewer('http', proxy, position)
-        if checked[position] == 'http':
-            main_viewer('socks4', proxy, position)
-        if checked[position] == 'socks4':
-            main_viewer('socks5', proxy, position)
-
-
 def view_video(position):
     global server_running
 
     if position != 0:
-        call_viewer(position)
+        proxy = proxy_list[position]
+
+        if proxy_type:
+            main_viewer(proxy_type, proxy, position)
+        else:
+            main_viewer('http', proxy, position)
+            if checked[position] == 'http':
+                main_viewer('socks4', proxy, position)
+            if checked[position] == 'socks4':
+                main_viewer('socks5', proxy, position)
 
     else:
         if api and not server_running:
             server_running = True
             website.start_server(host=host, port=port)
-        else:
-            call_viewer(position)
 
 
 def main():
