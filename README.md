@@ -35,12 +35,6 @@ Simple program to increase YouTube views written in Python. Works with live stre
   
   **Bitcoin :** `1Jh8KZ6khuHayNDeVV9tEzYSq9FPExKCAH`
 
-# View Decrease
- If you see views are getting deleted after a while, make sure you're using good proxies. Here https://github.com/MShawon/YouTube-Viewer/issues/46#issuecomment-806399397 a user confirmed about view stability with good proxies 
-
-# Issues
- Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer from issues first. If your problem isn't there, feel free to open an issue.
-
 # Requirements
  * Python 3.6+
  * High speed Internet Connection
@@ -48,9 +42,31 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * Google Chrome installed on your OS (not Chromium)
  * Chrome driver will be downloaded automatically by undetected-chromedriver
 
+
+# Proxies
+ Buy premium (datacenter and residential) proxies from [IPRoyal](https://iproyal.com/). I'm affiliated with them. This way you can support me too.
+
+* ## Free Proxy
+   Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use the free proxy category.
+   **N.B:** Available for **http(s)/socks4/socks5**
+   
+* ## Premium Proxy
+   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when the script asks for a proxy file name.
+   
+   **N.B:** Only available for **http** type proxy.
+
+* ## Rotating Proxy
+   You can also use the rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. 
+   **N.B:** Available for **http(s)/socks4/socks5**
+   
+   Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway.
+   **N.B:** Only available for **http** type proxy.
+   
 # Live Stream
    From now on, this script supports live streams too. Just use this script as you would for the already uploaded video. Script will automatically know if your video is live. Just bear in mind, you need a **high-end pc** for higher threads to get more viewers.
    Basically, script will check every 60 secs if youtube shows `x watching now` is present. If your live stream ends, script will check 5 times to be sure. In another word, after your live stream ends, script takes 5 minutes to close the driver.
+   
+   If you have never used this script before, use this first for an already uploaded video. This way, you will have a better understanding of how this script works. To do so, keep reading.
 
 # HTTP API
    Live logs fetched every 10 seconds and statistics in graphs are available on http://localhost:5000/ .Or [http://ip_of_your_pc:5000/](http://ip_of_your_pc:5000/) use this to access from another device under same network. A SQLite Database is being used  to store your generated views from this script. 
@@ -58,20 +74,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 # Config.json
    No need to type everything everytime you run the script. A config file will be created automatically to save and use your preferences.
-
-# Proxies
- Buy premium proxies from my referral link : [Webshare](https://www.webshare.io/?referral_code=8hd5him4soj1)
-
-* ## Free Proxy
-   Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use the free proxy category.
-
-* ## Premium Proxy
-   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when the script asks for a proxy file name.
-   **N.B:** Only available for **http** type proxy.
-
-* ## Rotating Proxy
-   You can also use the rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway but this will only work for **http** type proxy.
-
+   
 # Urls
   Put video links in the urls.txt. For multiple videos place urls in multple lines.
   1) To find video link in YouTube click share and copy.
@@ -149,5 +152,8 @@ Simple program to increase YouTube views written in Python. Works with live stre
         ```
    * Rest is self explanatory.
  
+ # Issues
+ Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer to issues first. If your problem isn't there, feel free to open an issue. Also, don't forget to give as many details as you can. config.json and a screenshot of terminal output provide a lot of information to resolve your problem.
+
 # Credits
 I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 
