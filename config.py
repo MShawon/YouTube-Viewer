@@ -19,7 +19,7 @@ class bcolors:
 
 def create_config():
     print(bcolors.WARNING + 'Your preferences will be saved so that you don\'t need to answer these questions again.' + bcolors.ENDC)
-    print(bcolors.WARNING + 'Just Hit Enter to accept default or recommended values without typing anything' + bcolors.ENDC)
+    print(bcolors.WARNING + 'Just Hit Enter to accept default or recommended values without typing anything\n' + bcolors.ENDC)
 
     config = {}
     port = 5000
@@ -57,6 +57,20 @@ def create_config():
 
     views = int(input(bcolors.WARNING + 'Amount of views : ' + bcolors.ENDC))
     config["views"] = views
+    
+    minimum = input(bcolors.WARNING + 'Minimum watch duration in percentage (default=85) : ' + bcolors.ENDC)
+    if minimum == '':
+        minimum = 85.0
+    else:
+        minimum = float(minimum)
+    config["minimum"] = minimum
+
+    maximum = input(bcolors.WARNING + 'Maximum watch duration in percentage (default=95) : ' + bcolors.ENDC)
+    if maximum == '':
+        maximum = 95.0
+    else:
+        maximum = float(maximum)
+    config["maximum"] = maximum  
 
     category = input(bcolors.OKCYAN + "What's your proxy category? " +
                      "[F = Free (without user:pass), P = Premium (with user:pass), R = Rotating Proxy] : " + bcolors.ENDC).lower()
@@ -93,6 +107,11 @@ def create_config():
                              'Enter your Rotating Proxy service Main Gateway : ' + bcolors.ENDC)
 
             if '@' in filename:
+                auth_required = True
+                proxy_type = 'http'
+            elif filename.count(':') == 3:
+                split = filename.split(':')
+                filename = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
                 auth_required = True
                 proxy_type = 'http'
             else:
@@ -143,7 +162,7 @@ def create_config():
         bandwidth = False
 
     threads = input(
-        bcolors.OKCYAN+'Threads (recommended = 5): ' + bcolors.ENDC)
+        bcolors.OKCYAN+'Threads [Amount of chrome driver you want to use] (recommended = 5): ' + bcolors.ENDC)
     if threads == '':
         threads = 5
     else:

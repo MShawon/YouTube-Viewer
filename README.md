@@ -44,29 +44,24 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 
 # Proxies
- Buy premium (datacenter and residential) proxies from [IPRoyal](https://iproyal.com/). I'm affiliated with them. This way you can support me too.
+ *[IPRoyal](https://iproyal.com/) offers datacenter and residential proxies. The Royal Residential proxies have a large pool with addresses in over 160 countries all over the world, so they can generate a massive number of views. IPRoyal agreed to provide a huge discount for my script users, so the price will be as low as 0.60USD/GB! To get this incredible 80% discount for Royal Residential proxies, use the discount code: `youtube80`*
+
 
 * ## Free Proxy
    Try not to use free proxies. But if you have a paid subscription and you want to use authenticated IP feature, then you can use the free proxy category.
-   **N.B:** Available for **http(s)/socks4/socks5**
+   N.B: Available for **http(s)/socks4/socks5**
    
 * ## Premium Proxy
-   Proxies with authentication can also be done. To do so put your proxies in this format **username:password@ipaddress:port** in a text file. Every single line will contain a single proxy. Provide your text file path when the script asks for a proxy file name.
+   Proxies with authentication can also be done. To do so put your proxies in this format `username:password@ipaddress:port`or `ipaddress:port:username:password` in a text file. Every single line will contain a single proxy. Provide your text file path when the script asks for a proxy file name.
    
-   **N.B:** Only available for **http** type proxy.
+   N.B: Only available for **http** type proxy.
 
 * ## Rotating Proxy
-   You can also use the rotating proxies service. You can either authenticate your IP on your proxy provider service and use *ipaddress:port* as Main Gateway. 
-   **N.B:** Available for **http(s)/socks4/socks5**
-   
-   Or direct use username:password combo like this *username:password@ipaddress:port* as Main Gateway.
-   **N.B:** Only available for **http** type proxy.
-   
-# Live Stream
-   From now on, this script supports live streams too. Just use this script as you would for the already uploaded video. Script will automatically know if your video is live. Just bear in mind, you need a **high-end pc** for higher threads to get more viewers.
-   Basically, script will check every 60 secs if youtube shows `x watching now` is present. If your live stream ends, script will check 5 times to be sure. In another word, after your live stream ends, script takes 5 minutes to close the driver.
-   
-   If you have never used this script before, use this first for an already uploaded video. This way, you will have a better understanding of how this script works. To do so, keep reading.
+   You can also use the rotating proxies service. You can either authenticate your IP on your proxy provider service and use `ipaddress:port` as Main Gateway. 
+   N.B: Available for **http(s)/socks4/socks5**
+
+   Or direct use username:password combo like this `username:password@ipaddress:port` or `ipaddress:port:username:password` as Main Gateway.
+   N.B: Only available for **http** type proxy.
 
 # HTTP API
    Live logs fetched every 10 seconds and statistics in graphs are available on http://localhost:5000/ .Or [http://ip_of_your_pc:5000/](http://ip_of_your_pc:5000/) use this to access from another device under same network. A SQLite Database is being used  to store your generated views from this script. 
@@ -85,6 +80,15 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
   *If you don't know any keyword just put your `video title :::: video title` in search.txt*
 
+   
+# Live Stream
+   From now on, this script supports live streams too. Just use this script as you would for the already uploaded video. Script will automatically know if your video is live. Just bear in mind, you need a **high-end pc** for higher threads to get more viewers.
+   Basically, script will check every 60 secs if youtube shows `x watching now` is present. If your live stream ends, script will check 5 times to be sure. In another word, after your live stream ends, script takes 5 minutes to close the driver.
+   
+   If you have never used this script before, use this first for an already uploaded video. This way, you will have a better understanding of how this script works. To do so, keep reading.
+
+# YouTube Music
+   Can generate views on YouTube Music too. In **urls.txt** put your music link like this `https://music.youtube.com/watch?v=xxxxx`. Script will automatically load YouTube Music when it sees link have `music.youtube.com`. **Search feature is not available for this.** So you need to either empty or delete the search.txt otherwise it will start searching videos in default YouTube.
 
 # Windows
 * ## Binary Release

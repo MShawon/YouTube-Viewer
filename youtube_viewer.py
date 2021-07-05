@@ -35,7 +35,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import closing
 from datetime import datetime
-from random import choice, randint, uniform
+from random import choice, randint, uniform, choices
 from time import gmtime, sleep, strftime
 
 import requests
@@ -86,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.5'
+SCRIPT_VERSION = '1.4.6'
 
 proxy = None
 driver = None
@@ -100,8 +100,8 @@ console = []
 
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
 ACTIVE = os.path.join('extension', 'always_active.zip')
-FINGERPRINT = os.path.join('extension', 'fingerprint_defender.crx')
-TIMEZONE = os.path.join('extension', 'spoof_timezone.crx')
+FINGERPRINT = os.path.join('extension', 'fingerprint_defender.zip')
+TIMEZONE = os.path.join('extension', 'spoof_timezone.zip')
 DATABASE = 'database.db'
 DATABASE_BACKUP = 'database_backup.db'
 
@@ -110,14 +110,14 @@ VIEWPORT = ['2560,1440', '1920,1080', '1440,900',
             '1536,864', '1366,768', '1280,1024', '1024,768']
 
 CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
-        '{8237E44A-0054-442C-B6B6-EA0509993955}',
-        '{401C381F-E0DE-4B85-8BD8-3F3F14FBDA57}',
-        '{4ea16ac7-fd5a-47c3-875b-dbf4a2008c20}']
+          '{8237E44A-0054-442C-B6B6-EA0509993955}',
+          '{401C381F-E0DE-4B85-8BD8-3F3F14FBDA57}',
+          '{4ea16ac7-fd5a-47c3-875b-dbf4a2008c20}']
 
 website.console = console
 website.database = DATABASE
 
-link = 'https://gist.githubusercontent.com/MShawon/29e185038f22e6ac5eac822a1e422e9d/raw/85c1e74ea5f958f952f0a88a836c437949d8b4e9/versions.txt'
+link = 'https://gist.githubusercontent.com/MShawon/29e185038f22e6ac5eac822a1e422e9d/raw/versions.txt'
 
 output = requests.get(link, timeout=60).text
 chrome_versions = output.split('\n')
@@ -180,7 +180,8 @@ def download_driver():
                 ['reg', 'query', 'HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon', '/v', 'version'],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
             )
-            version = process.communicate()[0].decode('UTF-8').strip().split()[-1]
+            version = process.communicate()[0].decode(
+                'UTF-8').strip().split()[-1]
         except:
             for i in CHROME:
                 for j in ['opv', 'pv']:
@@ -195,10 +196,10 @@ def download_driver():
                             'UTF-8').strip().split()[-1]
                     except:
                         pass
-        
+
         if not version:
             version = input(bcolors.WARNING +
-                'Please input your google chrome version (91.0.4472.114) : ' + bcolors.ENDC)
+                            'Please input your google chrome version (91.0.4472.114) : ' + bcolors.ENDC)
     else:
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
@@ -284,14 +285,17 @@ def load_url():
 def load_search():
     search = []
     print(bcolors.WARNING + 'Loading queries...' + bcolors.ENDC)
-    filename = 'search.txt'
-    load = open(filename, encoding="utf-8")
-    loaded = [items.rstrip().strip() for items in load]
-    loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
-    load.close()
+    try:
+        filename = 'search.txt'
+        load = open(filename, encoding="utf-8")
+        loaded = [items.rstrip().strip() for items in load]
+        loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
+        load.close()
 
-    for lines in loaded:
-        search.append(lines)
+        for lines in loaded:
+            search.append(lines)
+    except:
+        pass
 
     print(bcolors.OKGREEN +
           f'{len(search)} query loaded from search.txt' + bcolors.ENDC)
@@ -329,6 +333,9 @@ def load_proxy(filename):
     load.close()
 
     for lines in loaded:
+        if lines.count(':') == 3:
+            split = lines.split(':')
+            lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
         proxies.append(lines)
 
     return proxies
@@ -562,7 +569,7 @@ def search_video(driver, keyword, video_title):
     return i
 
 
-def check_state(driver):
+def play_video(driver):
     try:
         driver.find_element_by_css_selector('[title^="Pause (k)"]')
     except:
@@ -578,6 +585,19 @@ def check_state(driver):
                     "document.querySelector('button.ytp-play-button.ytp-button').click()")
 
 
+def play_music(driver):
+    try:
+        driver.find_element_by_xpath(
+            '//*[@id="play-pause-button" and @title="Pause"]')
+    except:
+        try:
+            driver.find_element_by_xpath(
+                '//*[@id="play-pause-button" and @title="Play"]').click()
+        except:
+            driver.execute_script(
+                'document.querySelector("#play-pause-button").click()')
+
+
 def save_bandwidth(driver):
     try:
         driver.find_element_by_css_selector(
@@ -585,7 +605,8 @@ def save_bandwidth(driver):
         driver.find_element_by_xpath(
             "//div[contains(text(),'Quality')]").click()
 
-        random_quality = choice(['144p', '240p', '360p'])
+        random_quality = choices(
+            ['144p', '240p', '360p'], cum_weights=(0.7, 0.9, 1.00), k=1)[0]
         quality = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
             (By.XPATH, f"//span[contains(string(),'{random_quality}')]")))
         driver.execute_script(
@@ -634,10 +655,10 @@ def main_viewer(proxy_type, proxy, position):
         if status == 200:
             try:
                 print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
-                      f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..." + bcolors.ENDC)
+                      f"{proxy} | {proxy_type} --> Good Proxy | Opening a new driver..." + bcolors.ENDC)
 
                 create_html({"#3b8eea": f"Tried {position+1} | ",
-                             "#23d18b": f"{proxy} | {proxy_type} --> Good Proxy | Searching for videos..."})
+                             "#23d18b": f"{proxy} | {proxy_type} --> Good Proxy | Opening a new driver..."})
 
                 pluginfile = os.path.join(
                     'extension', f'proxy_auth_plugin{position}.zip')
@@ -649,6 +670,10 @@ def main_viewer(proxy_type, proxy, position):
                         method = 1
                         url = choice(urls)
                         output = url
+                        if 'music.youtube.com' in url:
+                            youtube = 'Music'
+                        else:
+                            youtube = 'Video'
                     except:
                         raise UrlsError
 
@@ -660,14 +685,21 @@ def main_viewer(proxy_type, proxy, position):
                         video_title = query[1]
                         url = "https://www.youtube.com"
                         output = video_title
+                        youtube = 'Video'
                     except:
-                        raise SearchError
+                        url = choice(urls)
+                        output = url
+                        if 'music.youtube.com' in url:
+                            youtube = 'Music'
+                        else:
+                            raise SearchError
 
                 driver = get_driver(agent, proxy, proxy_type, pluginfile)
 
                 # driver.get('http://httpbin.org/ip')
                 # sleep(30)
 
+                sleep(2)
                 driver.get(url)
 
                 if 'consent' in driver.current_url:
@@ -679,76 +711,88 @@ def main_viewer(proxy_type, proxy, position):
 
                     bypass_consent(driver)
 
-                if method == 1:
-                    skip_initial_ad(driver, position, output)
+                if youtube == 'Video':
+                    if method == 1:
+                        skip_initial_ad(driver, position, output)
+
+                    else:
+                        scroll = search_video(driver, keyword, video_title)
+                        if scroll == 0:
+                            raise CaptchaError
+                        elif scroll == 10:
+                            raise QueryError
+                        else:
+                            pass
+
+                        skip_initial_ad(driver, position, output)
+
+                    try:
+                        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                            (By.XPATH, '//ytd-player[@id="ytd-player"]')))
+                    except:
+                        raise CaptchaError
+
+                    play_video(driver)
+
+                    if bandwidth:
+                        save_bandwidth(driver)
+
+                    play_video(driver)
+
+                    view_stat = WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
+                        (By.XPATH, '//span[@class="view-count style-scope ytd-video-view-count-renderer"]'))).text
 
                 else:
-                    scroll = search_video(driver, keyword, video_title)
-                    if scroll == 0:
+                    try:
+                        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                            (By.XPATH, '//*[@id="player-page"]')))
+                    except:
                         raise CaptchaError
-                    elif scroll == 10:
-                        raise QueryError
-                    else:
-                        pass
 
-                    skip_initial_ad(driver, position, output)
+                    play_music(driver)
 
-                try:
-                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                        (By.XPATH, '//ytd-player[@id="ytd-player"]')))
-                except:
-                    raise CaptchaError
-
-                check_state(driver)
-
-                try:
-                    video_len = duration_dict[output]
-                except KeyError:
-                    video_len = 0
-                    while video_len == 0:
-                        video_len = driver.execute_script(
-                            "return document.getElementById('movie_player').getDuration()")
-
-                    duration_dict[output] = video_len
-
-                if bandwidth:
-                    save_bandwidth(driver)
-
-                check_state(driver)
+                    view_stat = 'music'
 
                 if WIDTH == 0:
                     WIDTH = driver.execute_script('return screen.width')
                     VIEWPORT = [i for i in VIEWPORT if int(i[:4]) <= WIDTH]
 
-                view_stat = WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
-                    (By.XPATH, '//span[@class="view-count style-scope ytd-video-view-count-renderer"]'))).text
-                    
                 if 'watching' in view_stat:
                     error = 0
                     while True:
                         view_stat = driver.find_element_by_xpath(
                             '//span[@class="view-count style-scope ytd-video-view-count-renderer"]').text
                         if 'watching' in view_stat:
-                            print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN + 
-                                f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
+                            print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                                  f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
 
                             create_html({"#3b8eea": f"Tried {position+1} | ",
-                                        "#23d18b": f"{proxy} | {output} | ", "#29b2d3": f"{view_stat} "})
+                                         "#23d18b": f"{proxy} | {output} | ", "#29b2d3": f"{view_stat} "})
                         else:
                             error += 1
                         if error == 5:
                             break
                         sleep(60)
-                
+
                 else:
-                    video_len = video_len*uniform(.85, .95)
+                    try:
+                        video_len = duration_dict[output]
+                    except KeyError:
+                        video_len = 0
+                        while video_len == 0:
+                            video_len = driver.execute_script(
+                                "return document.getElementById('movie_player').getDuration()")
+
+                        duration_dict[output] = video_len
+
+                    video_len = video_len*uniform(minimum, maximum)
 
                     duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
                     print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
-                        f"{proxy} --> Video Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
+                          f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
 
                     create_html({"#3b8eea": f"Tried {position+1} | ",
-                                "#23d18b": f"{proxy} --> Video Found : {output} | Watch Duration : {duration} "})
+                                 "#23d18b": f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} "})
 
                     loop = int(video_len/4)
                     for _ in range(loop):
@@ -890,14 +934,18 @@ if __name__ == '__main__':
     if os.path.isfile('config.json'):
         with open('config.json', 'r') as openfile:
             config = json.load(openfile)
-        print(json.dumps(config, indent=4))
 
-        previous = str(input(
-            bcolors.OKBLUE + 'Config file exists! Do you want to continue with previous saved preferences ? [Yes/No] : ' + bcolors.ENDC)).lower()
-        if previous == 'n' or previous == 'no':
-            create_config()
+        if len(config) == 9:
+            print(json.dumps(config, indent=4))
+            previous = str(input(
+                bcolors.OKBLUE + 'Config file exists! Do you want to continue with previous saved preferences ? [Yes/No] : ' + bcolors.ENDC)).lower()
+            if previous == 'n' or previous == 'no':
+                create_config()
+            else:
+                pass
         else:
-            pass
+            print(bcolors.FAIL + 'Previous config file is not compatible with the latest script! Create a new one...' + bcolors.ENDC)
+            create_config()
     else:
         create_config()
 
@@ -909,6 +957,8 @@ if __name__ == '__main__':
     port = config["http_api"]["port"]
     database = config["database"]
     views = config["views"]
+    minimum = config["minimum"] / 100
+    maximum = config["maximum"] / 100
     category = config["proxy"]["category"]
     proxy_type = config["proxy"]["proxy_type"]
     filename = config["proxy"]["filename"]
@@ -943,6 +993,8 @@ if __name__ == '__main__':
                 sleeping()
                 print(bcolors.WARNING +
                       f'Total Checked : {check} times' + bcolors.ENDC)
+                if api:
+                    threads -= 1
                 main()
         except KeyboardInterrupt:
             sys.exit()

@@ -89,6 +89,9 @@ def load_proxy():
     load.close()
 
     for lines in loaded:
+        if lines.count(':') == 3:
+            split = lines.split(':')
+            lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
         proxies.append(lines)
 
     return proxies
