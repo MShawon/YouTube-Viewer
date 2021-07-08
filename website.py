@@ -12,8 +12,8 @@ global console
 console = []
 database = 'database.db'
 
-def create_graph_data(dropdown_text):
 
+def create_graph_data(dropdown_text):
     now = datetime.now()
     day = now.day
     month = now.month
@@ -87,6 +87,13 @@ def create_dropdown_data():
     return dropdown
 
 
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+
+
 def start_server(host, port):
     app = Flask(__name__,
                 static_url_path='',
@@ -116,9 +123,13 @@ def start_server(host, port):
                 'last': last_date
             })
 
+    @app.route('/shutdown', methods=['POST'])
+    def shutdown():
+        shutdown_server()
+        return 'Server shutting down...'
 
     app.run(host=host, port=port)
 
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     start_server(host='0.0.0.0', port=5000)

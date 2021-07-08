@@ -86,7 +86,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.6'
+SCRIPT_VERSION = '1.4.7'
 
 proxy = None
 driver = None
@@ -97,6 +97,7 @@ view = []
 duration_dict = {}
 checked = {}
 console = []
+completed = 0
 
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
 ACTIVE = os.path.join('extension', 'always_active.zip')
@@ -369,6 +370,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     options.add_experimental_option(
         "excludeSwitches", ["enable-automation", "enable-logging"])
     options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument("--lang=en-US")
     options.add_argument(f"user-agent={agent}")
     options.add_argument("--mute-audio")
     options.add_argument('--disable-features=UserAgentClientHint')
@@ -516,9 +518,9 @@ def skip_initial_ad(driver, position, video):
                 (By.CLASS_NAME, "ytp-ad-skip-button-container")))
 
             print(timestamp() + bcolors.OKBLUE +
-                  f"Tried {position+1} | Skipping Ads..." + bcolors.ENDC)
+                  f"Tried {position} | Skipping Ads..." + bcolors.ENDC)
 
-            create_html({"#23d18b": f"Tried {position+1} | Skipping Ads..."})
+            create_html({"#23d18b": f"Tried {position} | Skipping Ads..."})
 
             ad_duration = driver.find_element_by_class_name(
                 'ytp-time-duration').get_attribute('innerText')
@@ -544,8 +546,12 @@ def search_video(driver, keyword, video_title):
         if method == 1:
             input_keyword.send_keys(Keys.ENTER)
         else:
-            driver.find_element_by_xpath(
-                '//*[@id="search-icon-legacy"]').click()
+            try:
+                driver.find_element_by_xpath(
+                    '//*[@id="search-icon-legacy"]').click()
+            except:
+                driver.execute_script(
+                    'document.querySelector("#search-icon-legacy").click()')
 
     except:
         return i
@@ -633,7 +639,7 @@ def quit_driver(driver, pluginfile):
 
 
 def sleeping():
-    sleep(30)
+    sleep(5)
 
 
 def main_viewer(proxy_type, proxy, position):
@@ -654,10 +660,10 @@ def main_viewer(proxy_type, proxy, position):
 
         if status == 200:
             try:
-                print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                print(timestamp() + bcolors.OKBLUE + f"Tried {position} | " + bcolors.OKGREEN +
                       f"{proxy} | {proxy_type} --> Good Proxy | Opening a new driver..." + bcolors.ENDC)
 
-                create_html({"#3b8eea": f"Tried {position+1} | ",
+                create_html({"#3b8eea": f"Tried {position} | ",
                              "#23d18b": f"{proxy} | {proxy_type} --> Good Proxy | Opening a new driver..."})
 
                 pluginfile = os.path.join(
@@ -704,10 +710,10 @@ def main_viewer(proxy_type, proxy, position):
 
                 if 'consent' in driver.current_url:
                     print(timestamp() + bcolors.OKBLUE +
-                          f"Tried {position+1} | Bypassing consent..." + bcolors.ENDC)
+                          f"Tried {position} | Bypassing consent..." + bcolors.ENDC)
 
                     create_html(
-                        {"#3b8eea": f"Tried {position+1} | Bypassing consent..."})
+                        {"#3b8eea": f"Tried {position} | Bypassing consent..."})
 
                     bypass_consent(driver)
 
@@ -763,10 +769,10 @@ def main_viewer(proxy_type, proxy, position):
                         view_stat = driver.find_element_by_xpath(
                             '//span[@class="view-count style-scope ytd-video-view-count-renderer"]').text
                         if 'watching' in view_stat:
-                            print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                            print(timestamp() + bcolors.OKBLUE + f"Tried {position} | " + bcolors.OKGREEN +
                                   f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
 
-                            create_html({"#3b8eea": f"Tried {position+1} | ",
+                            create_html({"#3b8eea": f"Tried {position} | ",
                                          "#23d18b": f"{proxy} | {output} | ", "#29b2d3": f"{view_stat} "})
                         else:
                             error += 1
@@ -788,10 +794,10 @@ def main_viewer(proxy_type, proxy, position):
                     video_len = video_len*uniform(minimum, maximum)
 
                     duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
-                    print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " + bcolors.OKGREEN +
+                    print(timestamp() + bcolors.OKBLUE + f"Tried {position} | " + bcolors.OKGREEN +
                           f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
 
-                    create_html({"#3b8eea": f"Tried {position+1} | ",
+                    create_html({"#3b8eea": f"Tried {position} | ",
                                  "#23d18b": f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} "})
 
                     loop = int(video_len/4)
@@ -820,40 +826,40 @@ def main_viewer(proxy_type, proxy, position):
 
             except UrlsError:
                 print(timestamp() + bcolors.FAIL +
-                      f"Tried {position+1} | Your urls.txt is empty!" + bcolors.ENDC)
+                      f"Tried {position} | Your urls.txt is empty!" + bcolors.ENDC)
 
                 create_html(
-                    {"#f14c4c": f"Tried {position+1} | Your urls.txt is empty!"})
+                    {"#f14c4c": f"Tried {position} | Your urls.txt is empty!"})
 
                 status = 400
                 pass
 
             except SearchError:
                 print(timestamp() + bcolors.FAIL +
-                      f"Tried {position+1} | Your search.txt is empty!" + bcolors.ENDC)
+                      f"Tried {position} | Your search.txt is empty!" + bcolors.ENDC)
 
                 create_html(
-                    {"#f14c4c": f"Tried {position+1} | Your search.txt is empty!"})
+                    {"#f14c4c": f"Tried {position} | Your search.txt is empty!"})
 
                 status = 400
                 pass
 
             except CaptchaError:
                 print(timestamp() + bcolors.FAIL +
-                      f"Tried {position+1} | Slow internet speed or Stuck at recaptcha! Can't load YouTube..." + bcolors.ENDC)
+                      f"Tried {position} | Slow internet speed or Stuck at recaptcha! Can't load YouTube..." + bcolors.ENDC)
 
                 create_html(
-                    {"#f14c4c": f"Tried {position+1} | Slow internet speed or Stuck at recaptcha! Can't load YouTube..."})
+                    {"#f14c4c": f"Tried {position} | Slow internet speed or Stuck at recaptcha! Can't load YouTube..."})
 
                 status = quit_driver(driver, pluginfile)
                 pass
 
             except QueryError:
                 print(timestamp() + bcolors.FAIL +
-                      f"Tried {position+1} | Can't find this [{video_title}] video with this keyword [{keyword}]" + bcolors.ENDC)
+                      f"Tried {position} | Can't find this [{video_title}] video with this keyword [{keyword}]" + bcolors.ENDC)
 
                 create_html(
-                    {"#f14c4c": f"Tried {position+1} | Can't find this [{video_title}] video with this keyword [{keyword}]"})
+                    {"#f14c4c": f"Tried {position} | Can't find this [{video_title}] video with this keyword [{keyword}]"})
 
                 status = quit_driver(driver, pluginfile)
                 pass
@@ -861,19 +867,19 @@ def main_viewer(proxy_type, proxy, position):
             except Exception as e:
                 *_, exc_tb = sys.exc_info()
                 print(timestamp() + bcolors.FAIL +
-                      f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " + str(e) + bcolors.ENDC)
+                      f"Tried {position} | Line : {exc_tb.tb_lineno} | " + str(e) + bcolors.ENDC)
 
                 create_html(
-                    {"#f14c4c": f"Tried {position+1} | Line : {exc_tb.tb_lineno} | " + str(e)})
+                    {"#f14c4c": f"Tried {position} | Line : {exc_tb.tb_lineno} | " + str(e)})
 
                 status = quit_driver(driver, pluginfile)
                 pass
 
     except:
-        print(timestamp() + bcolors.OKBLUE + f"Tried {position+1} | " +
+        print(timestamp() + bcolors.OKBLUE + f"Tried {position} | " +
               bcolors.FAIL + f"{proxy} | {proxy_type} --> Bad proxy " + bcolors.ENDC)
 
-        create_html({"#3b8eea": f"Tried {position+1} | ",
+        create_html({"#3b8eea": f"Tried {position} | ",
                      "#f14c4c": f"{proxy} | {proxy_type} --> Bad proxy "})
 
         checked[position] = proxy_type
@@ -881,9 +887,24 @@ def main_viewer(proxy_type, proxy, position):
 
 
 def view_video(position):
+    global completed
     global server_running
 
-    if position != 0:
+    if position == 0:
+        if api and not server_running:
+            server_running = True
+            website.start_server(host=host, port=port)
+
+    elif position == total_proxies - 1:
+        if api and server_running:
+            while completed != total_proxies - 2:
+                sleep(5)
+
+            completed = -2
+            server_running = False
+            requests.post(f'http://127.0.0.1:{port}/shutdown')
+
+    else:
         proxy = proxy_list[position]
 
         if proxy_type:
@@ -895,13 +916,9 @@ def view_video(position):
             if checked[position] == 'socks4':
                 main_viewer('socks5', proxy, position)
 
-    else:
-        if api and not server_running:
-            server_running = True
-            website.start_server(host=host, port=port)
-
 
 def main():
+    global completed
     pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
@@ -910,6 +927,7 @@ def main():
 
         try:
             for future in as_completed(futures):
+                completed += 1
                 if len(view) == views:
                     print(
                         bcolors.WARNING + f'Amount of views added : {views} | Stopping program...' + bcolors.ENDC)
@@ -983,6 +1001,11 @@ if __name__ == '__main__':
         print(bcolors.OKCYAN +
               f'Total proxies : {total_proxies}' + bcolors.ENDC)
 
+    proxy_list.insert(0, 'dummy')
+    proxy_list.append('dummy')
+
+    total_proxies += 2
+
     check = -1
     while len(view) < views:
         try:
@@ -993,8 +1016,6 @@ if __name__ == '__main__':
                 sleeping()
                 print(bcolors.WARNING +
                       f'Total Checked : {check} times' + bcolors.ENDC)
-                if api:
-                    threads -= 1
                 main()
         except KeyboardInterrupt:
             sys.exit()
