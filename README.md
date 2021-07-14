@@ -44,7 +44,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 
 # Proxies
- *[IPRoyal](https://iproyal.com/) offers datacenter and residential proxies. The Royal Residential proxies have a large pool with addresses in over 160 countries all over the world, so they can generate a massive number of views. IPRoyal agreed to provide a huge discount for my script users, so the price will be as low as 0.60USD/GB! To get this incredible 80% discount for Royal Residential proxies, use the discount code: `youtube80`*
+ *[IPRoyal](https://iproyal.com?r=18862) offers datacenter and residential proxies. The Royal Residential proxies have a large pool with addresses in over 160 countries all over the world, so they can generate a massive number of views. IPRoyal agreed to provide a huge discount for my script users, so the price will be as low as 0.60USD/GB! To get this incredible 80% discount for Royal Residential proxies, use the discount code: `youtube80`*
 
 
 * ## Free Proxy
