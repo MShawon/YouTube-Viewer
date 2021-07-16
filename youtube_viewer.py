@@ -21,12 +21,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 import concurrent.futures.thread
 import json
 import logging
 import os
 import platform
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -35,14 +35,15 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import closing
 from datetime import datetime
-from random import choice, randint, uniform, choices
+from random import choice, choices, randint, uniform
 from time import gmtime, sleep, strftime
 
 import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers, browsers
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import (NoSuchElementException,
+                                        TimeoutException, WebDriverException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -86,7 +87,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.7'
+SCRIPT_VERSION = '1.4.8'
 
 proxy = None
 driver = None
@@ -513,7 +514,7 @@ def bypass_signin(driver):
 def skip_initial_ad(driver, position, video):
     try:
         video_len = duration_dict[video]
-        if video_len > 60:
+        if video_len > 30:
             skip_ad = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
                 (By.CLASS_NAME, "ytp-ad-skip-button-container")))
 
@@ -706,6 +707,20 @@ def main_viewer(proxy_type, proxy, position):
                 # sleep(30)
 
                 sleep(2)
+
+                try:
+                    ip =  re.findall(r"^.*@|(.*):", proxy)[-1]
+                    location = requests.get(f"http://ip-api.com/json/{ip}", timeout=30).json()
+                    params = {
+                        "latitude": location['lat'],
+                        "longitude": location['lon'],
+                        "accuracy": randint(20,100)
+                    }
+                    print(params)
+                    driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
+                except:
+                    pass
+
                 driver.get(url)
 
                 if 'consent' in driver.current_url:
@@ -863,6 +878,11 @@ def main_viewer(proxy_type, proxy, position):
 
                 status = quit_driver(driver, pluginfile)
                 pass
+            
+            except (WebDriverException, TimeoutException):
+                sleep(20)
+                status = quit_driver(driver, pluginfile)
+                pass
 
             except Exception as e:
                 *_, exc_tb = sys.exc_info()
@@ -984,6 +1004,13 @@ if __name__ == '__main__':
     background = config["background"]
     bandwidth = config["bandwidth"]
     threads = config["threads"]
+
+    if auth_required and background:
+        print(bcolors.FAIL +
+            "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
+        print(bcolors.WARNING +
+                f"Either use proxy without username & password or disable headless mode" + bcolors.ENDC)
+        sys.exit()
 
     if filename:
         if category == 'r':

@@ -76,7 +76,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   2) If you have any external link which will redirect to your youtube video you can use that too. Example : when you post a YouTube video link in **twitter** and you hit play on twitter, you will get a link like this `https://t.co/xxxxxxxxxx?amp=1`. This is helpful because YouTube will see that views are coming from External Source like twitter in this example.
 
 # Search
-  Program can search youtube with keyword and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title.Put keyword and title like this format `keyword :::: video title` in **search.txt** 
+  Program can search youtube with the keyword you want and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title. Put keyword and title like this format `keyword :::: video title` in **search.txt**. You can use same `video title` for multiple `keyword` too.
 
   *If you don't know any keyword just put your `video title :::: video title` in search.txt*
 
@@ -115,7 +115,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
    * After closing program, if chromedrivers are still running. You may want to double click **killdrive.bat** to close all chrome instances.
 
-   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors.
+   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors. Use both for better results.
 
 * ## Usage
    * Open command prompt in YouTube-Viewer folder and run
@@ -147,7 +147,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
       ```
       ps aux | awk '/chrome/ { print $2 } ' | xargs kill -9
       ```
-   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors.
+   * *urls.txt* or *search.txt* can't be empty. Otherwise you will see errors. Use both for better results.
 
 * ## Usage
    * Open command prompt in YouTube-Viewer folder and run
