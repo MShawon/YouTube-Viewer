@@ -26,7 +26,6 @@ import json
 import logging
 import os
 import platform
-import re
 import shutil
 import sqlite3
 import subprocess
@@ -42,8 +41,7 @@ import requests
 import undetected_chromedriver as uc
 from fake_headers import Headers, browsers
 from selenium import webdriver
-from selenium.common.exceptions import (NoSuchElementException,
-                                        TimeoutException, WebDriverException)
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -87,7 +85,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.8'
+SCRIPT_VERSION = '1.4.9'
 
 proxy = None
 driver = None
@@ -349,12 +347,12 @@ def check_proxy(agent, proxy, proxy_type):
             'User-Agent': f'{agent}',
         }
 
-        proxyDict = {
+        proxy_dict = {
             "http": f"{proxy_type}://{proxy}",
             "https": f"{proxy_type}://{proxy}",
         }
         response = requests.get(
-            'https://www.youtube.com/', headers=headers, proxies=proxyDict, timeout=30)
+            'https://www.youtube.com/', headers=headers, proxies=proxy_dict, timeout=30)
         status = response.status_code
 
     else:
@@ -380,9 +378,9 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
 
     if not background:
         options.add_extension(WEBRTC)
-        options.add_extension(ACTIVE)
         options.add_extension(FINGERPRINT)
         options.add_extension(TIMEZONE)
+        options.add_extension(ACTIVE)
 
     if auth_required:
         proxy = proxy.replace('@', ':')
@@ -709,15 +707,19 @@ def main_viewer(proxy_type, proxy, position):
                 sleep(2)
 
                 try:
-                    ip =  re.findall(r"^.*@|(.*):", proxy)[-1]
-                    location = requests.get(f"http://ip-api.com/json/{ip}", timeout=30).json()
+                    proxy_dict = {
+                        "http": f"{proxy_type}://{proxy}",
+                        "https": f"{proxy_type}://{proxy}",
+                    }
+                    location = requests.get(
+                        "http://ip-api.com/json", proxies=proxy_dict, timeout=30).json()
                     params = {
                         "latitude": location['lat'],
                         "longitude": location['lon'],
-                        "accuracy": randint(20,100)
+                        "accuracy": randint(20, 100)
                     }
-                    print(params)
-                    driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
+                    driver.execute_cdp_cmd(
+                        "Emulation.setGeolocationOverride", params)
                 except:
                     pass
 
@@ -878,11 +880,6 @@ def main_viewer(proxy_type, proxy, position):
 
                 status = quit_driver(driver, pluginfile)
                 pass
-            
-            except (WebDriverException, TimeoutException):
-                sleep(20)
-                status = quit_driver(driver, pluginfile)
-                pass
 
             except Exception as e:
                 *_, exc_tb = sys.exc_info()
@@ -1007,9 +1004,9 @@ if __name__ == '__main__':
 
     if auth_required and background:
         print(bcolors.FAIL +
-            "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
+              "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
         print(bcolors.WARNING +
-                f"Either use proxy without username & password or disable headless mode" + bcolors.ENDC)
+              f"Either use proxy without username & password or disable headless mode" + bcolors.ENDC)
         sys.exit()
 
     if filename:
