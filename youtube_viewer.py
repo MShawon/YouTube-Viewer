@@ -85,7 +85,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.4.9'
+SCRIPT_VERSION = '1.5.0'
 
 proxy = None
 driver = None
@@ -122,7 +122,7 @@ link = 'https://gist.githubusercontent.com/MShawon/29e185038f22e6ac5eac822a1e422
 output = requests.get(link, timeout=60).text
 chrome_versions = output.split('\n')
 
-browsers.chrome_ver += chrome_versions
+browsers.chrome_ver = chrome_versions
 
 
 class UrlsError(Exception):
@@ -509,6 +509,17 @@ def bypass_signin(driver):
                 pass
 
 
+def bypass_popup(driver):
+    try:
+        agree = WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
+            (By.XPATH, '//*[@aria-label="Agree to the use of cookies and other data for the purposes described"]')))
+        driver.execute_script(
+            "arguments[0].scrollIntoViewIfNeeded();", agree)
+        agree.click()
+    except:
+        pass
+
+
 def skip_initial_ad(driver, position, video):
     try:
         video_len = duration_dict[video]
@@ -750,7 +761,7 @@ def main_viewer(proxy_type, proxy, position):
                         skip_initial_ad(driver, position, output)
 
                     try:
-                        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                        WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
                             (By.XPATH, '//ytd-player[@id="ytd-player"]')))
                     except:
                         raise CaptchaError
@@ -760,6 +771,8 @@ def main_viewer(proxy_type, proxy, position):
                     if bandwidth:
                         save_bandwidth(driver)
 
+                    bypass_popup(driver)
+
                     play_video(driver)
 
                     view_stat = WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
@@ -767,11 +780,13 @@ def main_viewer(proxy_type, proxy, position):
 
                 else:
                     try:
-                        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                        WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
                             (By.XPATH, '//*[@id="player-page"]')))
                     except:
                         raise CaptchaError
 
+                    bypass_popup(driver)
+                    
                     play_music(driver)
 
                     view_stat = 'music'
@@ -822,6 +837,11 @@ def main_viewer(proxy_type, proxy, position):
                         sleep(5)
                         current_time = driver.execute_script(
                             "return document.getElementById('movie_player').getCurrentTime()")
+                        if youtube == 'Video':
+                            play_video(driver)
+                        elif youtube == 'Music':
+                            play_music(driver)
+
                         if current_time > video_len:
                             break
 
@@ -1007,6 +1027,7 @@ if __name__ == '__main__':
               "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
         print(bcolors.WARNING +
               f"Either use proxy without username & password or disable headless mode" + bcolors.ENDC)
+        print(input())
         sys.exit()
 
     if filename:
