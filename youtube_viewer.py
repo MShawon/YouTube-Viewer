@@ -85,7 +85,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.5.0'
+SCRIPT_VERSION = '1.5.1'
 
 proxy = None
 driver = None
@@ -515,6 +515,7 @@ def bypass_popup(driver):
             (By.XPATH, '//*[@aria-label="Agree to the use of cookies and other data for the purposes described"]')))
         driver.execute_script(
             "arguments[0].scrollIntoViewIfNeeded();", agree)
+        sleep(1)
         agree.click()
     except:
         pass
@@ -524,6 +525,7 @@ def skip_initial_ad(driver, position, video):
     try:
         video_len = duration_dict[video]
         if video_len > 30:
+            bypass_popup(driver)
             skip_ad = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
                 (By.CLASS_NAME, "ytp-ad-skip-button-container")))
 
@@ -543,43 +545,65 @@ def skip_initial_ad(driver, position, video):
         pass
 
 
+def type_keyword(driver, keyword, retry=False):
+    input_keyword = driver.find_element_by_css_selector('input#search')
+
+    if retry:
+        for _ in range(10):
+            try:
+                input_keyword.click()
+                break
+            except:
+                sleep(5)
+                pass
+
+    input_keyword.clear()
+    for letter in keyword:
+        input_keyword.send_keys(letter)
+        sleep(uniform(.1, .4))
+
+    method = randint(1, 2)
+    if method == 1:
+        input_keyword.send_keys(Keys.ENTER)
+    else:
+        try:
+            driver.find_element_by_xpath(
+                '//*[@id="search-icon-legacy"]').click()
+        except:
+            driver.execute_script(
+                'document.querySelector("#search-icon-legacy").click()')
+
+
 def search_video(driver, keyword, video_title):
     i = 0
     try:
-        input_keyword = driver.find_element_by_css_selector('input#search')
-
-        for letter in keyword:
-            input_keyword.send_keys(letter)
-            sleep(uniform(.1, .4))
-
-        method = randint(1, 2)
-        if method == 1:
-            input_keyword.send_keys(Keys.ENTER)
-        else:
-            try:
-                driver.find_element_by_xpath(
-                    '//*[@id="search-icon-legacy"]').click()
-            except:
-                driver.execute_script(
-                    'document.querySelector("#search-icon-legacy").click()')
-
+        type_keyword(driver, keyword)
     except:
-        return i
+        try:
+            bypass_popup(driver)
+            type_keyword(driver, keyword, retry=True)
+        except:
+            return i
 
     for i in range(1, 11):
         try:
-            section = WebDriverWait(driver, 60).until(EC.element_to_be_clickable(
+            section = WebDriverWait(driver, 60).until(EC.visibility_of_element_located(
                 (By.XPATH, f'//ytd-item-section-renderer[{i}]')))
             find_video = section.find_element_by_xpath(
                 f'//*[@title="{video_title}"]')
             driver.execute_script(
                 "arguments[0].scrollIntoViewIfNeeded();", find_video)
             sleep(1)
-            find_video.click()
+            bypass_popup(driver)
+            try:
+                find_video.click()
+            except:
+                driver.execute_script(
+                    "arguments[0].click();", find_video)
             break
         except NoSuchElementException:
             sleep(5)
-            WebDriverWait(driver, 30).until(EC.element_to_be_clickable(
+            WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
                 (By.TAG_NAME, 'body'))).send_keys(Keys.CONTROL, Keys.END)
 
     return i
@@ -786,7 +810,7 @@ def main_viewer(proxy_type, proxy, position):
                         raise CaptchaError
 
                     bypass_popup(driver)
-                    
+
                     play_music(driver)
 
                     view_stat = 'music'
