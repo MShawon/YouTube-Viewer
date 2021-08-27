@@ -22,10 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 import concurrent.futures.thread
+import hashlib
+import io
 import json
 import logging
 import os
 import platform
+import queue
 import shutil
 import sqlite3
 import subprocess
@@ -34,8 +37,8 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import closing
 from datetime import datetime
-from random import choice, choices, randint, uniform
-from time import gmtime, sleep, strftime
+from random import choice, choices, randint, shuffle, uniform
+from time import gmtime, sleep, strftime, time
 
 import requests
 import undetected_chromedriver as uc
@@ -46,6 +49,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from undetected_chromedriver.patcher import Patcher
 
 import website
 from config import create_config
@@ -85,18 +89,25 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.5.1'
+SCRIPT_VERSION = '1.6.0'
 
 proxy = None
 driver = None
 status = None
 server_running = False
 
+urls = []
+queries = []
+hash_urls = None
+hash_queries = None
+start_time = None
+
+driver_list = []
 view = []
 duration_dict = {}
 checked = {}
 console = []
-completed = 0
+threads = 0
 
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
 ACTIVE = os.path.join('extension', 'always_active.zip')
@@ -114,6 +125,11 @@ CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
           '{401C381F-E0DE-4B85-8BD8-3F3F14FBDA57}',
           '{4ea16ac7-fd5a-47c3-875b-dbf4a2008c20}']
 
+REFERERS = ['https://search.yahoo.com/', 'https://duckduckgo.com/', 'https://www.google.com/',
+            'https://www.bing.com/', 'https://t.co/', '']
+
+COMMANDS = [Keys.UP, Keys.DOWN, 'j', 'l', 'm', 't', 'c']
+
 website.console = console
 website.database = DATABASE
 
@@ -123,6 +139,21 @@ output = requests.get(link, timeout=60).text
 chrome_versions = output.split('\n')
 
 browsers.chrome_ver = chrome_versions
+
+
+def monkey_patch_exe(self):
+    linect = 0
+    replacement = self.gen_random_cdc()
+    replacement = f"  var key = '${replacement.decode()}_';\n".encode()
+    with io.open(self.executable_path, "r+b") as fh:
+        for line in iter(lambda: fh.readline(), b""):
+            if b"var key = " in line:
+                fh.seek(-len(line), 1)
+                fh.write(replacement)
+                linect += 1
+        return linect
+        
+Patcher.patch_exe = monkey_patch_exe
 
 
 class UrlsError(Exception):
@@ -164,16 +195,19 @@ def download_driver():
 
     if OSNAME == 'Linux':
         OSNAME = 'lin'
+        EXE_NAME = ""
         with subprocess.Popen(['google-chrome', '--version'], stdout=subprocess.PIPE) as proc:
             version = proc.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
     elif OSNAME == 'Darwin':
         OSNAME = 'mac'
+        EXE_NAME = ""
         process = subprocess.Popen(
             ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
         version = process.communicate()[0].decode(
             'UTF-8').replace('Google Chrome', '').strip()
     elif OSNAME == 'Windows':
         OSNAME = 'win'
+        EXE_NAME = ".exe"
         version = None
         try:
             process = subprocess.Popen(
@@ -199,7 +233,7 @@ def download_driver():
 
         if not version:
             version = input(bcolors.WARNING +
-                            'Please input your google chrome version (91.0.4472.114) : ' + bcolors.ENDC)
+                            'Please input your google chrome version (ex: 91.0.4472.114) : ' + bcolors.ENDC)
     else:
         print('{} OS is not supported.'.format(OSNAME))
         sys.exit()
@@ -210,7 +244,20 @@ def download_driver():
 
     uc.install()
 
-    return OSNAME
+    return OSNAME, EXE_NAME
+
+
+def copy_drivers(total):
+    cwd = os.getcwd()
+    current = os.path.join(cwd, f'chromedriver{EXE_NAME}')
+    os.makedirs('patched_drivers', exist_ok=True)
+    for i in range(total+1):
+        try:
+            destination = os.path.join(cwd, 'patched_drivers', f'chromedriver_{i}{EXE_NAME}')
+            shutil.copy(current, destination)
+        except Exception as e:
+            print(e)
+            pass
 
 
 def create_database():
@@ -285,17 +332,14 @@ def load_url():
 def load_search():
     search = []
     print(bcolors.WARNING + 'Loading queries...' + bcolors.ENDC)
-    try:
-        filename = 'search.txt'
-        load = open(filename, encoding="utf-8")
-        loaded = [items.rstrip().strip() for items in load]
-        loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
-        load.close()
+    filename = 'search.txt'
+    load = open(filename, encoding="utf-8")
+    loaded = [items.rstrip().strip() for items in load]
+    loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
+    load.close()
 
-        for lines in loaded:
-            search.append(lines)
-    except:
-        pass
+    for lines in loaded:
+        search.append(lines)
 
     print(bcolors.OKGREEN +
           f'{len(search)} query loaded from search.txt' + bcolors.ENDC)
@@ -341,6 +385,46 @@ def load_proxy(filename):
     return proxies
 
 
+def scrape_api(link):
+    proxies = []
+
+    response = requests.get(link)
+    output = response.content.decode()
+    if '\r\n' in output:
+        proxy = output.split('\r\n')
+    else:
+        proxy = output.split('\n')
+    
+    for lines in proxy:
+        if lines.count(':') == 3:
+            split = lines.split(':')
+            lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
+        proxies.append(lines)
+
+    return proxies
+
+
+def detect_file_change():
+    global hash_urls
+    global hash_queries
+    global urls
+    global queries
+
+    with open("urls.txt", "rb") as f:
+        new_hash = hashlib.md5(f.read()).hexdigest()
+    
+    if new_hash != hash_urls:
+        hash_urls = new_hash
+        urls = load_url()
+
+    with open("search.txt", "rb") as f:
+        new_hash = hashlib.md5(f.read()).hexdigest()
+
+    if new_hash != hash_queries:
+        hash_queries = new_hash
+        queries = load_search()
+
+
 def check_proxy(agent, proxy, proxy_type):
     if category == 'f':
         headers = {
@@ -361,7 +445,7 @@ def check_proxy(agent, proxy, proxy_type):
     return status
 
 
-def get_driver(agent, proxy, proxy_type, pluginfile):
+def get_driver(path, agent, proxy, proxy_type, pluginfile):
     options = webdriver.ChromeOptions()
     options.headless = background
     options.add_argument(f"--window-size={choice(VIEWPORT)}")
@@ -369,7 +453,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     options.add_experimental_option(
         "excludeSwitches", ["enable-automation", "enable-logging"])
     options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("--lang=en-US")
+    options.add_experimental_option('prefs', {'intl.accept_languages': 'en_US,en'})
     options.add_argument(f"user-agent={agent}")
     options.add_argument("--mute-audio")
     options.add_argument('--disable-features=UserAgentClientHint')
@@ -445,7 +529,7 @@ def get_driver(agent, proxy, proxy_type, pluginfile):
     else:
         options.add_argument(f'--proxy-server={proxy_type}://{proxy}')
 
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(executable_path=path, options=options)
 
     return driver
 
@@ -519,6 +603,17 @@ def bypass_popup(driver):
         agree.click()
     except:
         pass
+
+
+def bypass_other_popup(driver):
+    popups = ['Got it', 'Skip trial', 'No thanks', 'Dismiss', 'Not now']
+    shuffle(popups)
+    
+    for popup in popups:
+        try:
+            driver.find_element_by_xpath(f"//*[@id='button' and @aria-label='{popup}']").click()
+        except:
+            pass
 
 
 def skip_initial_ad(driver, position, video):
@@ -621,8 +716,11 @@ def play_video(driver):
                 driver.find_element_by_css_selector(
                     '[title^="Play (k)"]').click()
             except:
-                driver.execute_script(
-                    "document.querySelector('button.ytp-play-button.ytp-button').click()")
+                try:
+                    driver.execute_script(
+                        "document.querySelector('button.ytp-play-button.ytp-button').click()")
+                except:
+                    pass
 
 
 def play_music(driver):
@@ -661,12 +759,36 @@ def save_bandwidth(driver):
             pass
 
 
+def change_playback_speed(driver):
+    if playback_speed == 2:
+        driver.find_element_by_id('movie_player').send_keys('<'*randint(1,3))
+    elif playback_speed == 3:
+        driver.find_element_by_id('movie_player').send_keys('>'*randint(1,3))
+
+
+def random_command(driver):
+    bypass_other_popup(driver)
+
+    option = choices([1,2], cum_weights=(0.7, 1.00), k=1)[0]
+    if option == 2:
+        command = choice(COMMANDS)
+        if command in ['m', 't', 'c']:
+            driver.find_element_by_id('movie_player').send_keys(command)
+        else:
+            driver.find_element_by_id('movie_player').send_keys(command*randint(1,5))
+
+    
+
 def quit_driver(driver, pluginfile):
     try:
         os.remove(pluginfile)
     except:
         pass
-
+    
+    try:
+        driver_list.remove(driver)
+    except:
+        pass
     driver.quit()
     status = 400
     return status
@@ -681,6 +803,8 @@ def main_viewer(proxy_type, proxy, position):
         global WIDTH
         global VIEWPORT
 
+        detect_file_change()
+
         checked[position] = None
 
         header = Headers(
@@ -689,6 +813,10 @@ def main_viewer(proxy_type, proxy, position):
             headers=False
         ).generate()
         agent = header['User-Agent']
+
+        if category == 'r' and proxy_api:
+            proxies = scrape_api(link=proxy)
+            proxy = choice(proxies)
 
         status = check_proxy(agent, proxy, proxy_type)
 
@@ -699,6 +827,14 @@ def main_viewer(proxy_type, proxy, position):
 
                 create_html({"#3b8eea": f"Tried {position} | ",
                              "#23d18b": f"{proxy} | {proxy_type} --> Good Proxy | Opening a new driver..."})
+
+                patched_driver = os.path.join(
+                    'patched_drivers', f'chromedriver_{position%threads}{EXE_NAME}')
+
+                try:
+                    Patcher(executable_path=patched_driver).patch_exe()
+                except:
+                    pass
 
                 pluginfile = os.path.join(
                     'extension', f'proxy_auth_plugin{position}.zip')
@@ -734,8 +870,9 @@ def main_viewer(proxy_type, proxy, position):
                         else:
                             raise SearchError
 
-                driver = get_driver(agent, proxy, proxy_type, pluginfile)
+                driver = get_driver(patched_driver, agent, proxy, proxy_type, pluginfile)
 
+                driver_list.append(driver)
                 # driver.get('http://httpbin.org/ip')
                 # sleep(30)
 
@@ -757,8 +894,16 @@ def main_viewer(proxy_type, proxy, position):
                         "Emulation.setGeolocationOverride", params)
                 except:
                     pass
-
-                driver.get(url)
+                
+                referer = choice(REFERERS)
+                if referer:
+                    if method == 2 and 't.co/' in referer:
+                        driver.get(url)
+                    else:
+                        driver.get(referer)
+                        driver.execute_script("window.location.href = '{}';".format(url))
+                else:
+                    driver.get(url)
 
                 if 'consent' in driver.current_url:
                     print(timestamp() + bcolors.OKBLUE +
@@ -790,14 +935,16 @@ def main_viewer(proxy_type, proxy, position):
                     except:
                         raise CaptchaError
 
+                    bypass_popup(driver)
+
+                    bypass_other_popup(driver)
+
                     play_video(driver)
 
                     if bandwidth:
                         save_bandwidth(driver)
 
-                    bypass_popup(driver)
-
-                    play_video(driver)
+                    change_playback_speed(driver)
 
                     view_stat = WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
                         (By.XPATH, '//span[@class="view-count style-scope ytd-video-view-count-renderer"]'))).text
@@ -832,11 +979,16 @@ def main_viewer(proxy_type, proxy, position):
                                          "#23d18b": f"{proxy} | {output} | ", "#29b2d3": f"{view_stat} "})
                         else:
                             error += 1
+                    
+                        play_video(driver)
+                        random_command(driver)
+
                         if error == 5:
                             break
                         sleep(60)
 
                 else:
+                    current_url = driver.current_url
                     try:
                         video_len = duration_dict[output]
                     except KeyError:
@@ -863,10 +1015,11 @@ def main_viewer(proxy_type, proxy, position):
                             "return document.getElementById('movie_player').getCurrentTime()")
                         if youtube == 'Video':
                             play_video(driver)
+                            random_command(driver)
                         elif youtube == 'Music':
                             play_music(driver)
 
-                        if current_time > video_len:
+                        if current_time > video_len or driver.current_url != current_url:
                             break
 
                 view.append(position)
@@ -947,8 +1100,21 @@ def main_viewer(proxy_type, proxy, position):
         pass
 
 
+
+def stop_server(immediate=False):
+    global server_running
+
+    print('Trying to stop the server')
+    if api and server_running:
+        if not immediate:
+            while 'state=running' in str(futures[1:-1]):
+                sleep(5)
+
+        server_running = False
+        requests.post(f'http://127.0.0.1:{port}/shutdown')
+
+
 def view_video(position):
-    global completed
     global server_running
 
     if position == 0:
@@ -957,13 +1123,7 @@ def view_video(position):
             website.start_server(host=host, port=port)
 
     elif position == total_proxies - 1:
-        if api and server_running:
-            while completed != total_proxies - 2:
-                sleep(5)
-
-            completed = -2
-            server_running = False
-            requests.post(f'http://127.0.0.1:{port}/shutdown')
+        stop_server()
 
     else:
         proxy = proxy_list[position]
@@ -978,8 +1138,35 @@ def view_video(position):
                 main_viewer('socks5', proxy, position)
 
 
+def clean_exit(executor):
+    executor.shutdown(wait = False)
+
+    driver_list_ = list(driver_list)
+    for driver in driver_list_:
+        quit_driver(driver, None)
+
+    while True:
+        try:
+            work_item = executor._work_queue.get_nowait()
+        except queue.Empty:
+            break
+                            
+        if work_item is not None:
+            work_item.future.cancel()
+
+
 def main():
-    global completed
+    global start_time
+    global total_proxies
+    global proxy_list
+    global threads
+    global futures
+
+    start_time = time()
+    threads = randint(min_threads, max_threads)
+    if api:
+        threads += 1
+
     pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
@@ -988,33 +1175,74 @@ def main():
 
         try:
             for future in as_completed(futures):
-                completed += 1
+
                 if len(view) == views:
                     print(
                         bcolors.WARNING + f'Amount of views added : {views} | Stopping program...' + bcolors.ENDC)
-                    executor._threads.clear()
-                    concurrent.futures.thread._threads_queues.clear()
+                    
+                    clean_exit(executor)
+                    stop_server()
                     break
+
+                elif category != 'r':
+
+                    if (time() - start_time) > refresh*60:
+
+                        if filename:
+                            if proxy_api:
+                                proxy_list = scrape_api(filename)
+                            else:
+                                proxy_list = load_proxy(filename)
+                        else:
+                            proxy_list = gather_proxy()
+
+                        proxy_list = list(filter(None, proxy_list))  # removing empty lines
+
+                        print(bcolors.WARNING +
+                            f'Proxy reloaded from : {filename}' + bcolors.ENDC)
+
+                        total_proxies = len(proxy_list)
+                        print(bcolors.OKCYAN +
+                            f'Total proxies : {total_proxies}' + bcolors.ENDC)
+
+                        proxy_list.insert(0, 'dummy')
+                        proxy_list.append('dummy')
+
+                        total_proxies += 2
+
+                        clean_exit(executor)
+                        stop_server()
+                        break
+                    
                 future.result()
 
         except KeyboardInterrupt:
+            clean_exit(executor)
             executor._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
+            stop_server(immediate=True)
+            sys.exit()
 
 
 if __name__ == '__main__':
-
+    
     check_update()
-    OSNAME = download_driver()
+    OSNAME, EXE_NAME = download_driver()
     create_database()
     urls = load_url()
     queries = load_search()
+
+    with open("urls.txt", "rb") as f:
+        hash_urls = hashlib.md5(f.read()).hexdigest()
+
+    with open("search.txt", "rb") as f:
+        hash_queries = hashlib.md5(f.read()).hexdigest()
 
     if os.path.isfile('config.json'):
         with open('config.json', 'r') as openfile:
             config = json.load(openfile)
 
-        if len(config) == 9:
+        if len(config) == 11:
             print(json.dumps(config, indent=4))
             previous = str(input(
                 bcolors.OKBLUE + 'Config file exists! Do you want to continue with previous saved preferences ? [Yes/No] : ' + bcolors.ENDC)).lower()
@@ -1042,24 +1270,33 @@ if __name__ == '__main__':
     proxy_type = config["proxy"]["proxy_type"]
     filename = config["proxy"]["filename"]
     auth_required = config["proxy"]["authentication"]
+    proxy_api = config["proxy"]["proxy_api"]
+    refresh = config["proxy"]["refresh"]
     background = config["background"]
     bandwidth = config["bandwidth"]
-    threads = config["threads"]
+    playback_speed = config["playback_speed"]
+    max_threads = config["max_threads"]
+    min_threads = config["min_threads"]
 
     if auth_required and background:
         print(bcolors.FAIL +
               "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
-        print(bcolors.WARNING +
-              f"Either use proxy without username & password or disable headless mode" + bcolors.ENDC)
-        print(input())
+        input(bcolors.WARNING +
+              f"Either use proxy without username & password or disable headless mode " + bcolors.ENDC)
         sys.exit()
+
+    copy_drivers(max_threads)
 
     if filename:
         if category == 'r':
             proxy_list = [filename]
             proxy_list = proxy_list * 100000
         else:
-            proxy_list = load_proxy(filename)
+            if proxy_api:
+                proxy_list = scrape_api(filename)
+            else:
+                proxy_list = load_proxy(filename)
+
     else:
         proxy_list = gather_proxy()
 

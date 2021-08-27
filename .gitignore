@@ -1,6 +1,7 @@
 .venv/
 .vscode/
 __pycache__/
+patched_drivers/
 database.db
 database_backup.db
 config.json
