@@ -6,4 +6,5 @@ database.db
 database_backup.db
 config.json
 chromedriver.exe
+version.txt
 *.log

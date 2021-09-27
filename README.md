@@ -25,7 +25,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 **Disclaimer:** This has been developed for educational purposes only. Any action you take using this script is strictly at your own risk. I will not be liable for any losses or damages you face using this script.
 
-**Cons:** Try not to use this script every day. Run this once or twice a week with newer proxies. Guess this will reduce the view decrease issue.
+**Cons:** There will be some view drop always. 
 
 
 # Support
@@ -44,7 +44,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # Features
  * YouTube default, live streaming and YouTube Music support
  * Multithreaded and Dynamic thread support
- * Auto download chrome driver 
+ * Auto download updated chrome driver whenever user's Google Chrome version is updated
  * Patch chrome driver on the start of every thread by undetected-chromedriver
  * Proxy support 
       * location : text file (must be on path) / proxy API (should work with most of the proxy providers)
@@ -55,6 +55,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * chrome v70+ randomized user agent based on platform
  * canvas,audio,font,webgl fingerprint defender and IP leak prevent by webrtc control
  * geolocation, timezone, referer spoofing
+ * can add extra extensions in the `extension/custom_extension/` folder
  * direct link or search *keyword* on YouTube then watch the video by matching exact video *title*
  * modify urls.txt and search.txt on the fly without restarting program
  * HTTP api on localhost and a database to store view count
@@ -116,7 +117,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # Windows
 * ## Binary Release
 
-  For windows you can download binary releases from **[Binary releases](https://github.com/MShawon/YouTube-Viewer/releases)** or you can install it from source. To do so keep reading. 
+  For windows you can download binary releases from **[Binary releases](https://github.com/MShawon/YouTube-Viewer/releases)**. Download this file named `YouTube-Viewer_win_x.x.x.zip`, unzip it and run the `youtube_viewer.exe`. Or you can install it from source. To do so keep reading. 
   
 * ## Installation 
  
@@ -180,15 +181,15 @@ Simple program to increase YouTube views written in Python. Works with live stre
    * Rest is self explanatory.
  
  # Best Practices
-  There will be some view drop always. To get the most out of this script you should maintain these things.
+  To get the most out of this script you should maintain these things.
   * Don't use HEADLESS mode. Because no IP leak prevention, fingerprint defending, etc. can be done in headless mode.
-  * Youtube doesn't count views from the same IP after a certain time. Like, don't expect to get 100 views from 10 proxies. If you want more views, try to use a lot of premium proxies(free proxies are flagged by most of the websites) 
+  * Youtube doesn't count views from the same IP after a certain time. Like, don't expect to get 100 views from 10 proxies. If you want more views, try to use a lot of premium proxies(free proxies are flagged by most websites). DO NOT use TOR proxies.
   * Use both [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) and [search.txt](https://github.com/MShawon/YouTube-Viewer#search)
   * And use as many [urls](https://github.com/MShawon/YouTube-Viewer#urls) and [keyword::::title](https://github.com/MShawon/YouTube-Viewer#search) as you can. Don't use just one video.
 
 
  # Issues
- Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer to issues first. If your problem isn't there, feel free to open an issue. Also, don't forget to give as many details as you can. config.json and a screenshot of terminal output provide a lot of information to resolve your problem.
+ Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer to issues first. If your problem isn't there, feel free to open an issue. Also, don't forget to give as many details as you can. config.json and a screenshot of terminal output provide a handful of information to resolve your problem.
 
 # Credits
-I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 
+ I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 

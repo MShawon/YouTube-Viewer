@@ -1,0 +1,1 @@
+## Place all the extra extensions you want to use here. Both `.zip` and `.crx` extension is supported.
