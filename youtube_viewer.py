@@ -90,7 +90,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.6.1'
+SCRIPT_VERSION = '1.6.2'
 
 proxy = None
 driver = None
@@ -132,7 +132,7 @@ CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
 REFERERS = ['https://search.yahoo.com/', 'https://duckduckgo.com/', 'https://www.google.com/',
             'https://www.bing.com/', 'https://t.co/', '']
 
-COMMANDS = [Keys.UP, Keys.DOWN, 'k', 'j', 'l', 'm', 't', 'c']
+COMMANDS = [Keys.UP, Keys.DOWN, 'k', 'j', 'l', 't', 'c']
 
 website.console = console
 website.database = DATABASE
@@ -336,15 +336,10 @@ def create_html(text_dict):
 
 
 def load_url():
-    links = []
     print(bcolors.WARNING + 'Loading urls...' + bcolors.ENDC)
-    filename = 'urls.txt'
-    load = open(filename)
-    loaded = [items.rstrip().strip() for items in load]
-    load.close()
 
-    for lines in loaded:
-        links.append(lines)
+    with open('urls.txt', encoding="utf-8") as fh:
+        links = [x.strip() for x in fh if x.strip() != '']
 
     print(bcolors.OKGREEN +
           f'{len(links)} url loaded from urls.txt' + bcolors.ENDC)
@@ -353,16 +348,11 @@ def load_url():
 
 
 def load_search():
-    search = []
     print(bcolors.WARNING + 'Loading queries...' + bcolors.ENDC)
-    filename = 'search.txt'
-    load = open(filename, encoding="utf-8")
-    loaded = [items.rstrip().strip() for items in load]
-    loaded = [[i.strip() for i in items.split('::::')] for items in loaded]
-    load.close()
 
-    for lines in loaded:
-        search.append(lines)
+    with open('search.txt', encoding="utf-8") as fh:
+        search = [[y.strip() for y in x.strip().split('::::')]
+                  for x in fh if x.strip() != '' and '::::' in x]
 
     print(bcolors.OKGREEN +
           f'{len(search)} query loaded from search.txt' + bcolors.ENDC)
@@ -388,6 +378,9 @@ def gather_proxy():
         proxies = proxies + proxy
         print(bcolors.OKGREEN +
               f'{len(proxy)} proxies gathered from {link}' + bcolors.ENDC)
+    
+    proxies = list(filter(None, proxies))
+    shuffle(proxies)
 
     return proxies
 
@@ -395,15 +388,17 @@ def gather_proxy():
 def load_proxy(filename):
     proxies = []
 
-    load = open(filename)
-    loaded = [items.rstrip().strip() for items in load]
-    load.close()
+    with open(filename, encoding="utf-8") as fh:
+        loaded = [x.strip() for x in fh if x.strip() != '']
 
     for lines in loaded:
         if lines.count(':') == 3:
             split = lines.split(':')
             lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
         proxies.append(lines)
+
+    proxies = list(filter(None, proxies))
+    shuffle(proxies)
 
     return proxies
 
@@ -423,6 +418,9 @@ def scrape_api(link):
             split = lines.split(':')
             lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
         proxies.append(lines)
+
+    proxies = list(filter(None, proxies))
+    shuffle(proxies)
 
     return proxies
 
@@ -806,10 +804,11 @@ def random_command(driver):
         if command in ['m', 't', 'c']:
             driver.find_element_by_id('movie_player').send_keys(command)
         elif command == 'k':
-            driver.find_element_by_id('movie_player').send_keys(command)
+            if randint(1, 2) == 1:
+                driver.find_element_by_id('movie_player').send_keys(command)
             driver.execute_script(
                 f'document.querySelector("#comments"){choices(["scrollIntoView", "scrollIntoViewIfNeeded"])}();')
-            sleep(randint(4, 10))
+            sleep(uniform(4, 10))
             driver.execute_script(
                 'document.querySelector("#movie_player").scrollIntoViewIfNeeded();')
         else:
@@ -819,15 +818,16 @@ def random_command(driver):
 
 def quit_driver(driver, pluginfile):
     try:
-        os.remove(pluginfile)
-    except:
-        pass
-
-    try:
         driver_list.remove(driver)
     except:
         pass
     driver.quit()
+
+    try:
+        os.remove(pluginfile)
+    except:
+        pass
+
     status = 400
     return status
 
@@ -907,6 +907,10 @@ def main_viewer(proxy_type, proxy, position):
 
                 pluginfile = os.path.join(
                     'extension', f'proxy_auth_plugin{position}.zip')
+
+                factor = int(threads/6)
+                sleep_time = int((str(position)[-1])) * factor
+                sleep(sleep_time)
 
                 driver = get_driver(patched_driver, agent,
                                     proxy, proxy_type, pluginfile)
@@ -1230,7 +1234,7 @@ def main():
                     stop_server()
                     break
 
-                elif category != 'r':
+                elif refresh != 0:
 
                     if (time() - start_time) > refresh*60:
 
@@ -1241,9 +1245,6 @@ def main():
                                 proxy_list = load_proxy(filename)
                         else:
                             proxy_list = gather_proxy()
-
-                        # removing empty lines
-                        proxy_list = list(filter(None, proxy_list))
 
                         print(bcolors.WARNING +
                               f'Proxy reloaded from : {filename}' + bcolors.ENDC)
@@ -1346,8 +1347,6 @@ if __name__ == '__main__':
 
     else:
         proxy_list = gather_proxy()
-
-    proxy_list = list(filter(None, proxy_list))  # removing empty lines
 
     total_proxies = len(proxy_list)
     if category != 'r':
