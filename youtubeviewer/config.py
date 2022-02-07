@@ -1,23 +1,11 @@
-import sys
 import json
 import os
+import sys
 
-os.system("")
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+from .colors import bcolors
 
 
-def create_config():
+def create_config(config_path):
     print(bcolors.WARNING + 'Your preferences will be saved so that you don\'t need to answer these questions again.' + bcolors.ENDC)
     print(bcolors.WARNING + 'Just Hit Enter to accept default or recommended values without typing anything.' + bcolors.ENDC)
 
@@ -165,11 +153,8 @@ def create_config():
         input('\nPlease input F for Free, P for Premium and R for Rotating proxy ')
         sys.exit()
 
-    refresh = 0.0
+    refresh = -1
     if category != 'r':
-        print(bcolors.WARNING + '\nRefresh interval means after every X minutes, program will reload proxies from your File or API' + bcolors.ENDC)
-        print(bcolors.WARNING + 'You should use this if and only if there will be new proxies after every X minutes.' + bcolors.ENDC)
-        print(bcolors.WARNING + 'Otherwise just enter 0 as the interval' + bcolors.ENDC)
         refresh = float(input(
             bcolors.OKCYAN+'\nEnter a interval to reload proxies from File or API (in minute) : ' + bcolors.ENDC))
 
@@ -230,7 +215,7 @@ def create_config():
 
     json_object = json.dumps(config, indent=4)
 
-    with open("config.json", "w") as outfile:
+    with open(config_path, "w") as outfile:
         outfile.write(json_object)
 
     print(bcolors.OKGREEN + '\nYour preferences are saved in config.json. You can always create a new config file from youtube_viewer.py' + bcolors.ENDC)
@@ -238,4 +223,6 @@ def create_config():
 
 
 if __name__ == '__main__':
-    create_config()
+    os.system("")
+
+    create_config(config_path='config.json')

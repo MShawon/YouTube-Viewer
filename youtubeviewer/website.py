@@ -1,8 +1,10 @@
 import calendar
 import sqlite3
+import warnings
 from contextlib import closing
 from datetime import date, datetime, timedelta
 
+warnings.filterwarnings("ignore", category=Warning)
 from flask import Flask, jsonify, render_template, request
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',

@@ -41,6 +41,13 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
 
+# New Update 
+ Latest update v1.7.0 include a feature to get views as suggested videos which can decrease the view drops issue. To get the must out of it, one must run the bot on multiple videos. However this is still an experimental feature. If you face any major issue, roll back to previous version.
+
+ If you are not using the release version, don't forget to update the dependency by 
+ `pip install -r requirements.txt`
+
+
 # Features
  * YouTube default, live streaming and YouTube Music support
  * Multithreaded and Dynamic thread support
@@ -63,6 +70,12 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * bypass consent page and several other pop up 
  * save bandwidth by reducing video quality 
  * can set higher(100%) watch duration percentage to increase *Watch time*, change playback speed
+ * #### Traffic Sources
+   * YouTube Search
+   * Suggested Videos
+   * External (Google, Yahoo, DuckDuckGo, Bing, Twitter)
+   * Direct or unknown
+
 
 
 # Proxies
