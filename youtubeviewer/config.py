@@ -1,8 +1,7 @@
 import json
-import os
 import sys
 
-from .colors import bcolors
+from .colors import *
 
 
 def create_config(config_path):
@@ -153,8 +152,11 @@ def create_config(config_path):
         input('\nPlease input F for Free, P for Premium and R for Rotating proxy ')
         sys.exit()
 
-    refresh = -1
+    refresh = 0.0
     if category != 'r':
+        print(bcolors.WARNING + '\nRefresh interval means after every X minutes, program will reload proxies from your File or API' + bcolors.ENDC)
+        print(bcolors.WARNING + 'You should use this if and only if there will be new proxies in your File or API after every X minutes.' + bcolors.ENDC)
+        print(bcolors.WARNING + 'Otherwise just enter 0 as the interval' + bcolors.ENDC)
         refresh = float(input(
             bcolors.OKCYAN+'\nEnter a interval to reload proxies from File or API (in minute) : ' + bcolors.ENDC))
 
@@ -223,6 +225,4 @@ def create_config(config_path):
 
 
 if __name__ == '__main__':
-    os.system("")
-
     create_config(config_path='config.json')

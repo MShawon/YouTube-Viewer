@@ -2,7 +2,7 @@ from random import shuffle
 
 import requests
 
-from .colors import bcolors
+from .colors import *
 
 
 def gather_proxy():
@@ -32,6 +32,9 @@ def gather_proxy():
 
 def load_proxy(filename):
     proxies = []
+
+    if not os.path.isfile(filename) and filename[-4:] != '.txt':
+        filename = f'{filename}.txt'
 
     with open(filename, encoding="utf-8") as fh:
         loaded = [x.strip() for x in fh if x.strip() != '']

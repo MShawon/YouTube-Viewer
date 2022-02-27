@@ -1,6 +1,6 @@
 import hashlib
 
-from .colors import bcolors
+from .colors import *
 
 
 def load_url():

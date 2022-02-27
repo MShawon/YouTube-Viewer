@@ -24,7 +24,9 @@ SOFTWARE.
 import concurrent.futures.thread
 import os
 import shutil
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from glob import glob
 
 import requests
 from fake_headers import Headers
@@ -61,9 +63,7 @@ print(bcolors.OKCYAN + """
 [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-'''
-Backup previous checked goodproxies
-'''
+
 try:
     os.remove('ProxyBackup.txt')
 except:
@@ -71,7 +71,7 @@ except:
 
 try:
     shutil.copy('GoodProxy.txt', 'ProxyBackup.txt')
-    print(bcolors.WARNING + 'GoodProxy backed up in ProxyBackup' + bcolors.ENDC)
+    print(bcolors.WARNING + 'GoodProxy.txt backed up in ProxyBackup.txt' + bcolors.ENDC)
     os.remove('GoodProxy.txt')
 except:
     pass
@@ -79,14 +79,28 @@ except:
 checked = {}
 
 
+def clean_exe_temp(folder):
+    try:
+        temp_name = sys._MEIPASS.split('\\')[-1]
+    except:
+        temp_name = None
+
+    for f in glob(os.path.join('temp', folder, '*')):
+        if temp_name not in f:
+            shutil.rmtree(f, ignore_errors=True)
+
+
 def load_proxy():
     proxies = []
 
     filename = input(bcolors.OKBLUE +
                      'Enter your proxy file name: ' + bcolors.ENDC)
-    load = open(filename)
-    loaded = [items.rstrip().strip() for items in load]
-    load.close()
+
+    if not os.path.isfile(filename) and filename[-4:] != '.txt':
+        filename = f'{filename}.txt'
+
+    with open(filename, encoding="utf-8") as fh:
+        loaded = [x.strip() for x in fh if x.strip() != '']
 
     for lines in loaded:
         if lines.count(':') == 3:
@@ -97,7 +111,7 @@ def load_proxy():
     return proxies
 
 
-def mainChecker(proxy_type, proxy, position):
+def main_checker(proxy_type, proxy, position):
 
     checked[position] = None
 
@@ -131,27 +145,27 @@ def mainChecker(proxy_type, proxy, position):
 
     except:
         print(bcolors.OKBLUE + f"Tried {position+1} |" + bcolors.FAIL +
-              f' {proxy} | {proxy_type} |BAD ' + bcolors.ENDC)
+              f' {proxy} | {proxy_type} | BAD ' + bcolors.ENDC)
         checked[position] = proxy_type
         pass
 
 
-def proxyCheck(position):
+def proxy_check(position):
 
     proxy = proxy_list[position]
 
-    mainChecker('http', proxy, position)
+    main_checker('http', proxy, position)
     if checked[position] == 'http':
-        mainChecker('socks4', proxy, position)
+        main_checker('socks4', proxy, position)
     if checked[position] == 'socks4':
-        mainChecker('socks5', proxy, position)
+        main_checker('socks5', proxy, position)
 
 
 def main():
     pool_number = [i for i in range(total_proxies)]
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = [executor.submit(proxyCheck, position)
+        futures = [executor.submit(proxy_check, position)
                    for position in pool_number]
 
         try:
@@ -166,6 +180,8 @@ def main():
 
 
 if __name__ == '__main__':
+    
+    clean_exe_temp(folder='proxy_check')
     threads = int(
         input(bcolors.OKBLUE+'Threads (recommended = 100): ' + bcolors.ENDC))
 

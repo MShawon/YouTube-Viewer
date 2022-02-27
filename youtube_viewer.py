@@ -33,17 +33,16 @@ from fake_headers import Headers, browsers
 from undetected_chromedriver.patcher import Patcher
 
 from youtubeviewer import website
+from youtubeviewer.basics import *
 from youtubeviewer.config import create_config
 from youtubeviewer.database import *
 from youtubeviewer.download_driver import *
-from youtubeviewer.basics import *
 from youtubeviewer.load_files import *
 from youtubeviewer.proxies import *
 
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
-os.system("")
 
 print(bcolors.OKGREEN + """
 
@@ -62,7 +61,7 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.7.0'
+SCRIPT_VERSION = '1.7.1'
 
 proxy = None
 driver = None
@@ -138,6 +137,17 @@ Patcher.patch_exe = monkey_patch_exe
 def timestamp():
     date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
     return bcolors.OKGREEN + f'[{date_fmt}] '
+
+
+def clean_exe_temp(folder):
+    try:
+        temp_name = sys._MEIPASS.split('\\')[-1]
+    except:
+        temp_name = None
+
+    for f in glob(os.path.join('temp', folder, '*')):
+        if temp_name not in f:
+            shutil.rmtree(f, ignore_errors=True)
 
 
 def update_chrome_version():
@@ -382,17 +392,13 @@ def main_viewer(proxy_type, proxy, position):
                     if method == 2 and 't.co/' in referer:
                         driver.get(url)
                     else:
-                        driver.get(referer)
-                        if 'consent.yahoo.com' in driver.current_url:
-                            try:
-                                consent = driver.find_element(
-                                    By.XPATH, "//button[@name='agree']")
-                                driver.execute_script(
-                                    "arguments[0].scrollIntoView();", consent)
-                                consent.click()
-                                driver.get(referer)
-                            except:
-                                pass
+                        if 'search.yahoo.com' in referer:
+                            driver.get('https://duckduckgo.com/')
+                            driver.execute_script(
+                                "window.history.pushState('page2', 'Title', arguments[0]);", referer)
+                        else:
+                            driver.get(referer)
+
                         driver.execute_script(
                             "window.location.href = '{}';".format(url))
 
@@ -713,6 +719,7 @@ def main():
 
 if __name__ == '__main__':
 
+    clean_exe_temp(folder='youtube_viewer')
     update_chrome_version()
     check_update()
     osname, exe_name = download_driver(patched_drivers=patched_drivers)

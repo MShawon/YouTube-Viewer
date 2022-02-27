@@ -1,5 +1,4 @@
 
-import os
 import platform
 import shutil
 import subprocess
@@ -7,7 +6,7 @@ import sys
 
 import undetected_chromedriver._compat as uc
 
-from .colors import bcolors
+from .colors import *
 
 CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
           '{8237E44A-0054-442C-B6B6-EA0509993955}',
