@@ -27,13 +27,40 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 **Cons:** There will be some view drop always. 
 
-
 # Support
    Consider a donation to keep this project alive and for the countless hours of works and testing :)
    
   **PayPal :** https://paypal.me/mshawon1
   
   **Bitcoin :** `1Jh8KZ6khuHayNDeVV9tEzYSq9FPExKCAH`
+
+# Topics
+* [Requirements](https://github.com/MShawon/YouTube-Viewer#requirements)
+* [New Update](https://github.com/MShawon/YouTube-Viewer#new-update)
+* [Features](https://github.com/MShawon/YouTube-Viewer#features)
+* [Proxies](https://github.com/MShawon/YouTube-Viewer#proxies)
+   * [Free Proxy](https://github.com/MShawon/YouTube-Viewer#free-proxy)
+   * [Premium Proxy](https://github.com/MShawon/YouTube-Viewer#premium-proxy)
+   * [Rotating Proxy](https://github.com/MShawon/YouTube-Viewer#rotating-proxy)
+
+* [HTTP API](https://github.com/MShawon/YouTube-Viewer#http-api)
+* [Config.json](https://github.com/MShawon/YouTube-Viewer#configjson)
+* [Urls](https://github.com/MShawon/YouTube-Viewer#urls)
+* [Search](https://github.com/MShawon/YouTube-Viewer#search)
+* [Live Stream](https://github.com/MShawon/YouTube-Viewer#live-stream)
+* [YouTube Music](https://github.com/MShawon/YouTube-Viewer#youtube-music)
+* [Windows](https://github.com/MShawon/YouTube-Viewer#windows)
+   * [Binary Release](https://github.com/MShawon/YouTube-Viewer#binary-release)
+   * [Installation](https://github.com/MShawon/YouTube-Viewer#installation)
+   * [Usage](https://github.com/MShawon/YouTube-Viewer#usage)
+* [Linux / Mac](https://github.com/MShawon/YouTube-Viewer#linux--mac)
+   * [Installation](https://github.com/MShawon/YouTube-Viewer#installation-1)
+   * [Usage](https://github.com/MShawon/YouTube-Viewer#usage)
+* [Best Practices](https://github.com/MShawon/YouTube-Viewer#usage-1)
+* [Issues](https://github.com/MShawon/YouTube-Viewer#issues)
+* [Credits](https://github.com/MShawon/YouTube-Viewer#credits)
+
+
 
 # Requirements
  * **Python 3.7.x-3.9.x**
@@ -42,7 +69,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * Google Chrome installed on your OS (not Chromium)
 
 # New Update 
- Latest update v1.7.0 include a feature to get views as suggested videos which can decrease the view drops issue. To get the must out of it, one must run the bot on multiple videos. However this is still an experimental feature. If you face any major issue, roll back to previous version.
+ Update from v1.7.0 include a feature to get views as suggested videos which can decrease the view drops issue. To get the must out of it, one must run the bot on multiple videos. However this is still an experimental feature. If you face any major issue, roll back to previous version.
 
  If you are not using the release version, don't forget to update the dependency by 
  `pip install -r requirements.txt`
@@ -138,16 +165,16 @@ Simple program to increase YouTube views written in Python. Works with live stre
   
   Open command prompt and type
   ```
-  git clone https://github.com/MShawon/YouTube-Viewer.git
+  git clone https://github.com/MShawon/YouTube-Viewer.git --depth 10
   ```
   ```
   cd YouTube-Viewer
   ```
   ```
-  python -m pip install --upgrade pip
+  python -m pip install --upgrade pip wheel
   ```
   ```
-  pip install setuptools<59
+  pip install "setuptools<59"
   ```
   ```
   pip install -r requirements.txt
@@ -177,16 +204,16 @@ Simple program to increase YouTube views written in Python. Works with live stre
   
   Open your favourite terminal and run
    ```
-  git clone https://github.com/MShawon/YouTube-Viewer.git
+  git clone https://github.com/MShawon/YouTube-Viewer.git --depth 10
   ```
   ```
   cd YouTube-Viewer
   ```
   ```
-  python3 -m pip install --upgrade pip
+  python3 -m pip install --upgrade pip wheel
   ```
   ```
-  pip3 install setuptools<59
+  pip3 install "setuptools<59"
   ```
   ```
   pip3 install -r requirements.txt
