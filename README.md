@@ -47,7 +47,8 @@ Simple program to increase YouTube views written in Python. Works with live stre
 [Urls](https://github.com/MShawon/YouTube-Viewer#urls)    
 [Search](https://github.com/MShawon/YouTube-Viewer#search)    
 [Live Stream](https://github.com/MShawon/YouTube-Viewer#live-stream)    
-[YouTube Music](https://github.com/MShawon/YouTube-Viewer#youtube-music)    
+[YouTube Music](https://github.com/MShawon/YouTube-Viewer#youtube-music)
+[Fast VPS](https://github.com/MShawon/YouTube-Viewer#fast-vps-with-unlimited-traffic)     
 [Windows](https://github.com/MShawon/YouTube-Viewer#windows)  
 &ensp;&emsp;[Binary Release](https://github.com/MShawon/YouTube-Viewer#binary-release)  
 &ensp;&emsp;[Installation](https://github.com/MShawon/YouTube-Viewer#installation)  
@@ -152,6 +153,11 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 # YouTube Music
    Can generate views on YouTube Music too. In **urls.txt** put your music link like this `https://music.youtube.com/watch?v=xxxxx`. Script will automatically load YouTube Music when it sees link have `music.youtube.com`. **Search feature is not available for this.** So you need to empty the search.txt otherwise it will start searching videos in default YouTube.
+
+   For YouTube Music use version 1.6.2 or earlier until the bug is fixed in the latest releases.
+
+# Fast VPS with Unlimited Traffic
+  *[PetroSky](https://petrosky.io/mshawon) is one of the various CloudHosting services with the fastest and most convenient cloud technology. Their servers are powered by the latest **AMD RYZEN/EPYC CPUs** with High-Performance **NVMe SSD Hard Drives** that will let your application run faster than ever. You can get 2 vCPU with 4 GB ECC RAM for as low as 11.99€/month which will work very well for YouTube-Viewer script for 2 threads. Visit [PetroSky](https://petrosky.io/mshawon) to get the fastest VPS with unlimited traffic at the lowest price.*
 
 # Windows
 * ## Binary Release
