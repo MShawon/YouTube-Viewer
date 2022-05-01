@@ -1,0 +1,48 @@
+name: Issue/Feature request
+description: Submit your issue/feature request here
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: checkboxes
+    attributes:
+      label: I'm submitting a ...
+      options:
+      - label: bug report
+      - label: feature request
+      - label: support request --> Contact me over mail for support https://github.com/MShawon
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        A concise description of what you're experiencing and what you expected to happen.
+        If applicable, include terminal logs or screenshots!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: |
+        examples:
+          - **OS** : Ubuntu 20.04
+          - **Python** : 3.9.10 / EXE without Python
+          - **Script version** : 1.7.1
+      value: |
+          - OS : 
+          - Python : 
+          - Script version : 
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: config.json
+      description: If applicable, attach your config.json to resolve the issue
+      placeholder: Before posting, make sure to remove information like proxy username and password or private API
+      render: markdown
+    validations:
+      required: true

@@ -47,8 +47,8 @@ Simple program to increase YouTube views written in Python. Works with live stre
 [Urls](https://github.com/MShawon/YouTube-Viewer#urls)    
 [Search](https://github.com/MShawon/YouTube-Viewer#search)    
 [Live Stream](https://github.com/MShawon/YouTube-Viewer#live-stream)    
-[YouTube Music](https://github.com/MShawon/YouTube-Viewer#youtube-music)
-[Fast VPS](https://github.com/MShawon/YouTube-Viewer#fast-vps-with-unlimited-traffic)     
+[YouTube Music](https://github.com/MShawon/YouTube-Viewer#youtube-music)    
+[Fast VPS](https://github.com/MShawon/YouTube-Viewer#fast-vps-with-unlimited-traffic)         
 [Windows](https://github.com/MShawon/YouTube-Viewer#windows)  
 &ensp;&emsp;[Binary Release](https://github.com/MShawon/YouTube-Viewer#binary-release)  
 &ensp;&emsp;[Installation](https://github.com/MShawon/YouTube-Viewer#installation)  
@@ -68,12 +68,6 @@ Simple program to increase YouTube views written in Python. Works with live stre
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
 
-# New Update 
- Update from v1.7.0 include a feature to get views as suggested videos which can decrease the view drops issue. To get the must out of it, one must run the bot on multiple videos. However this is still an experimental feature. If you face any major issue, roll back to previous version.
-
- If you are not using the release version, don't forget to update the dependency by 
- `pip install -r requirements.txt`
-
 
 # Features
  * YouTube default, live streaming and YouTube Music support
@@ -86,12 +80,12 @@ Simple program to increase YouTube views written in Python. Works with live stre
       * format : `ip:port`, `user:pass@ip:port`, `ip:port:user:pass`
       * proxy refresh after a certain time specified by the user
       * rotating proxy support
- * chrome v70+ randomized user agent based on platform
+ * chrome v80+ randomized user agent based on platform
  * canvas,audio,font,webgl fingerprint defender and IP leak prevent by webrtc control
  * geolocation, timezone, referer spoofing
  * can add extra extensions in the `extension/custom_extension/` folder
  * direct link or search *keyword* on YouTube then watch the video by matching exact video *title*
- * modify urls.txt and search.txt on the fly without restarting program
+ * modify **urls.txt, search.txt and config.json** on the fly without restarting program
  * HTTP api on localhost and a database to store view count
  * config.json to save settings
  * bypass consent page and several other pop up 
@@ -101,8 +95,19 @@ Simple program to increase YouTube views written in Python. Works with live stre
    * YouTube Search
    * Suggested Videos
    * External (Google, Yahoo, DuckDuckGo, Bing, Twitter)
+   * End Screens
+   * Channel Pages
    * Direct or unknown
 
+# How to get started
+  1) First, install the script following any one of these   
+      * [Windows without installing python](https://github.com/MShawon/YouTube-Viewer#binary-release)    
+      * [Windows from source code](https://github.com/MShawon/YouTube-Viewer#installation)    
+      * [Linux / Mac from source code](https://github.com/MShawon/YouTube-Viewer#linux--mac)
+   2) Then put your video links in the [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) file
+   3) To search your video on YouTube and then play it put the search keywords and video title in the [search.txt](https://github.com/MShawon/YouTube-Viewer#search) file
+   4) Get your [proxy](https://github.com/MShawon/YouTube-Viewer#proxies) list
+   5) Run the script and follow the instructions from there.
 
 
 # Proxies
@@ -129,10 +134,11 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 # HTTP API
    Live logs fetched every 10 seconds and statistics in graphs are available on http://localhost:5000/ .Or [http://ip_of_your_pc:5000/](http://ip_of_your_pc:5000/) use this to access from another device under same network. A SQLite Database is being used  to store your generated views from this script. 
-   Last 20 logs from scripts are fetched every 10 seconds to show on website and graph is updated every 5 minutes.
+   Last 200 logs from scripts are fetched every 10 seconds to show on website and graph is updated every 5 minutes.
 
 # Config.json
    No need to type everything everytime you run the script. A config file will be created automatically to save and use your preferences.
+   You can modify it on the fly without restarting the program.
    
 # Urls
   Put video links in the urls.txt. For multiple videos place urls in multple lines.
@@ -157,7 +163,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
    For YouTube Music use version 1.6.2 or earlier until the bug is fixed in the latest releases.
 
 # Fast VPS with Unlimited Traffic
-  *[PetroSky](https://petrosky.io/mshawon) is one of the various CloudHosting services with the fastest and most convenient cloud technology. Their servers are powered by the latest **AMD RYZEN/EPYC CPUs** with High-Performance **NVMe SSD Hard Drives** that will let your application run faster than ever. You can get 2 vCPU with 4 GB ECC RAM for as low as 11.99€/month which will work very well for YouTube-Viewer script for 2 threads. Visit [PetroSky](https://petrosky.io/mshawon) to get the fastest VPS with unlimited traffic at the lowest price.*
+  *[PetroSky](https://petrosky.io/mshawon) is one of the various CloudHosting services with the fastest and most convenient cloud technology. Their servers are powered by the latest **AMD RYZEN/EPYC CPUs** with High-Performance **NVMe SSD Hard Drives** that will let your application run faster than ever. You can get 2 vCPU with 4 GB ECC RAM for as low as 11.99€/month which will work very well for YouTube-Viewer script for 2 threads. Visit [PetroSky](https://petrosky.io/mshawon) to get the fastest VPS with unlimited traffic at the lowest price. Use this code `mshawon25` to get **25% discount**  on your purchase*
 
 # Windows
 * ## Binary Release
@@ -186,7 +192,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   ```
 
 * ## Important
-   * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
+   * If you've got a large free proxies collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
       ```
       python proxy_check.py
       ```
@@ -225,7 +231,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   ```
 
 * ## Important
-   * If you've got a large proxy collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
+   * If you've got a large free proxies collection, you should run this command to filter Good proxies. Then use **GoodProxy.txt** for proxy in **youtube_viewer.py**
         ```
         python3 proxy_check.py
         ```
@@ -250,9 +256,6 @@ Simple program to increase YouTube views written in Python. Works with live stre
   * Use both [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) and [search.txt](https://github.com/MShawon/YouTube-Viewer#search)
   * And use as many [urls](https://github.com/MShawon/YouTube-Viewer#urls) and [keyword::::title](https://github.com/MShawon/YouTube-Viewer#search) as you can. Don't use just one video.
 
-
- # Issues
- Before opening an issue, please read this page thoroughly. Maybe someone already faced the same problem you have right now. So it's always a good idea to check the answer to issues first. If your problem isn't there, feel free to open an issue. Also, don't forget to give as many details as you can. config.json and a screenshot of terminal output provide a handful of information to resolve your problem.
 
 # Credits
  I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 

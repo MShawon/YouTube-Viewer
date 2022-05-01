@@ -14,6 +14,14 @@
 	<title>YouTube Viewer</title>
 
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<style>
+		.scroll {
+			max-height: 550px;
+			overflow-y: auto;
+			display: flex;
+			flex-direction: column-reverse;
+		}
+	</style>
 </head>
 
 <body>
@@ -30,8 +38,8 @@
 		<div class="card-header">
 			<h3>Live Logs</h3>
 		</div>
-		<div class="card-body">
-			{% for n in range(1,21) %}
+		<div class="card-body scroll">
+			{% for n in range(1,201) %}
 			<p class="card-text mb-0 mt-0" id="logs-{{n}}"> </p>
 			{% endfor %}
 		</div>

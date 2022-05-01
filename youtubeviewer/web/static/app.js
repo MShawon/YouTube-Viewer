@@ -44,7 +44,7 @@ function queryLogs() {
 
     req.done(function (data) {
         var i;
-        for (i = 1; i < 21; i++) {
+        for (i = 1; i < 201; i++) {
             $('#logs-' + i).html(data.console[i - 1]);
         }
     });

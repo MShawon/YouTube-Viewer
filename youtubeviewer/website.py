@@ -1,11 +1,35 @@
+"""
+MIT License
+
+Copyright (c) 2021-2022 MShawon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 import calendar
 import sqlite3
 import warnings
 from contextlib import closing
 from datetime import date, datetime, timedelta
 
-warnings.filterwarnings("ignore", category=Warning)
 from flask import Flask, jsonify, render_template, request
+
+warnings.filterwarnings("ignore", category=Warning)
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December']
@@ -22,11 +46,10 @@ def create_graph_data(dropdown_text):
     year = now.year
     today = now.date()
     days = False
-    number = False
     try:
         number = [int(s) for s in dropdown_text.split() if s.isdigit()][0]
-    except:
-        pass
+    except Exception:
+        number = False
 
     if number:
         if dropdown_text.startswith('Last'):
@@ -67,7 +90,7 @@ def create_graph_data(dropdown_text):
                         total += view[0][0]
                     else:
                         graph_data.append([i[-2:], 0])
-    except:
+    except Exception:
         pass
 
     return graph_data, total, first_date, last_date
@@ -96,7 +119,7 @@ def shutdown_server():
     func()
 
 
-def start_server(host, port):
+def start_server(host, port, debug=False):
     app = Flask(__name__,
                 static_url_path='',
                 static_folder='web/static',
@@ -109,7 +132,7 @@ def start_server(host, port):
 
     @app.route('/update', methods=['POST'])
     def update():
-        return jsonify({'result': 'success', 'console': console[-20:]})
+        return jsonify({'result': 'success', 'console': console[:200]})
 
     @app.route('/graph', methods=['GET', 'POST'])
     def graph():
@@ -130,8 +153,8 @@ def start_server(host, port):
         shutdown_server()
         return 'Server shutting down...'
 
-    app.run(host=host, port=port)
+    app.run(host=host, port=port, debug=debug)
 
 
 if __name__ == '__main__':
-    start_server(host='0.0.0.0', port=5000)
+    start_server(host='0.0.0.0', port=5000, debug=True)

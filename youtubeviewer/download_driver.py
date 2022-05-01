@@ -1,4 +1,26 @@
+"""
+MIT License
 
+Copyright (c) 2021-2022 MShawon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 import platform
 import shutil
 import subprocess
@@ -42,7 +64,7 @@ def download_driver(patched_drivers):
             )
             version = process.communicate()[0].decode(
                 'UTF-8').strip().split()[-1]
-        except:
+        except Exception:
             for i in CHROME:
                 for j in ['opv', 'pv']:
                     try:
@@ -54,7 +76,7 @@ def download_driver(patched_drivers):
                         )
                         version = process.communicate()[0].decode(
                             'UTF-8').strip().split()[-1]
-                    except:
+                    except Exception:
                         pass
 
         if not version:
@@ -63,13 +85,13 @@ def download_driver(patched_drivers):
             version = input(bcolors.WARNING +
                             'Please input your google chrome version (ex: 91.0.4472.114) : ' + bcolors.ENDC)
     else:
-        print('{} OS is not supported.'.format(osname))
+        input('{} OS is not supported.'.format(osname))
         sys.exit()
 
     try:
         with open('version.txt', 'r') as f:
             previous_version = f.read()
-    except:
+    except Exception:
         previous_version = '0'
 
     with open('version.txt', 'w') as f:
@@ -78,7 +100,7 @@ def download_driver(patched_drivers):
     if version != previous_version:
         try:
             os.remove(f'chromedriver{exe_name}')
-        except:
+        except Exception:
             pass
 
         shutil.rmtree(patched_drivers, ignore_errors=True)
@@ -97,8 +119,8 @@ def copy_drivers(cwd, patched_drivers, exe, total):
     os.makedirs(patched_drivers, exist_ok=True)
     for i in range(total+1):
         try:
-            destination = os.path.join(patched_drivers, f'chromedriver_{i}{exe}')
+            destination = os.path.join(
+                patched_drivers, f'chromedriver_{i}{exe}')
             shutil.copy(current, destination)
-        except Exception as e:
-            print(e)
+        except Exception:
             pass
