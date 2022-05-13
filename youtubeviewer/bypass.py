@@ -93,7 +93,7 @@ def bypass_popup(driver):
     except WebDriverException:
         try:
             agree = driver.find_element(
-                By.XPATH, '//*[@aria-label="Accept the use of cookies and other data for the purposes described"]')
+                By.XPATH, f'//*[@aria-label="{choice(["Accept","Reject"])} the use of cookies and other data for the purposes described"]')
             click_popup(driver=driver, element=agree)
         except WebDriverException:
             pass

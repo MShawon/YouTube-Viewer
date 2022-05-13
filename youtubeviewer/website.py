@@ -34,8 +34,8 @@ warnings.filterwarnings("ignore", category=Warning)
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December']
 
-global console
 console = []
+html_table = ''
 database = 'database.db'
 
 
@@ -132,7 +132,7 @@ def start_server(host, port, debug=False):
 
     @app.route('/update', methods=['POST'])
     def update():
-        return jsonify({'result': 'success', 'console': console[:200]})
+        return jsonify({'result': 'success', 'console': console[:200], 'table': html_table[8:-9]})
 
     @app.route('/graph', methods=['GET', 'POST'])
     def graph():

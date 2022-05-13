@@ -24,12 +24,14 @@ SOFTWARE.
 import io
 import json
 import logging
+import textwrap
 from concurrent.futures import ThreadPoolExecutor, wait
 from time import gmtime, sleep, strftime, time
 
 import psutil
 from fake_headers import Headers, browsers
 from requests.exceptions import RequestException
+from tabulate import tabulate
 from undetected_chromedriver.patcher import Patcher
 
 from youtubeviewer import website
@@ -43,6 +45,7 @@ from youtubeviewer.proxies import *
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
+SCRIPT_VERSION = '1.7.3'
 
 print(bcolors.OKGREEN + """
 
@@ -61,10 +64,11 @@ print(bcolors.OKCYAN + """
            [ GitHub : https://github.com/MShawon/YouTube-Viewer ]
 """ + bcolors.ENDC)
 
-SCRIPT_VERSION = '1.7.2'
+print(bcolors.WARNING + f"""
++{'-'*26} Version: {SCRIPT_VERSION} {'-'*26}+
+""" + bcolors.ENDC)
 
 proxy = None
-driver = None
 status = None
 start_time = None
 server_running = False
@@ -81,14 +85,14 @@ hash_config = None
 driver_dict = {}
 duration_dict = {}
 checked = {}
+video_statistics = {}
 view = []
 bad_proxies = []
 used_proxies = []
-console = []
 temp_folders = []
-threads = 0
+console = []
 
-global views
+threads = 0
 views = 100
 
 cwd = os.getcwd()
@@ -106,6 +110,8 @@ viewports = ['2560,1440', '1920,1080', '1440,900',
 
 REFERERS = ['https://search.yahoo.com/', 'https://duckduckgo.com/', 'https://www.google.com/',
             'https://www.bing.com/', 'https://t.co/', '']
+
+headers = ['Index', 'Video Title', 'Views']
 
 website.console = console
 website.database = DATABASE
@@ -128,10 +134,8 @@ Patcher.patch_exe = monkey_patch_exe
 
 
 def timestamp():
-    global date_fmt, cpu_usage
+    global date_fmt
     date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
-    cpu = str(psutil.cpu_percent())
-    cpu_usage = cpu + '%' + ' '*(5-len(cpu)) if cpu != '0.0' else cpu_usage
     return bcolors.OKGREEN + f'[{date_fmt}] | ' + bcolors.OKCYAN + f'{cpu_usage} | '
 
 
@@ -299,7 +303,7 @@ def youtube_normal(method, keyword, video_title, driver, output):
             raise Exception(
                 f"Can't find this [{video_title}] video with this keyword [{keyword}]")
 
-        skip_initial_ad(driver, output, duration_dict)
+        skip_initial_ad(driver, video_title, duration_dict)
 
     try:
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
@@ -366,6 +370,7 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         while video_len == 0:
             video_len = driver.execute_script(
                 "return document.getElementById('movie_player').getDuration()")
+            sleep(1)
 
         duration_dict[output] = video_len
 
@@ -379,10 +384,13 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
                  "#23d18b": f"{proxy.split('@')[-1]} --> {youtube} Found : {output} | Watch Duration : {duration} "})
 
     if youtube == 'Video' and collect_id:
-        video_id = driver.find_element(
-            By.XPATH, '//*[@id="page-manager"]/ytd-watch-flexy').get_attribute('video-id')
-        if video_id and video_id not in suggested:
-            suggested.append(video_id)
+        try:
+            video_id = driver.find_element(
+                By.XPATH, '//*[@id="page-manager"]/ytd-watch-flexy').get_attribute('video-id')
+            if video_id and video_id not in suggested:
+                suggested.append(video_id)
+        except WebDriverException:
+            pass
 
     error = 0
     loop = int(video_len/4)
@@ -407,12 +415,16 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         if error == 10:
             error_msg = f'Taking too long to play the video | Reason : buffering'
             if current_state == -1:
-                error_msg = f'Failed to play the video | Possible Reason : {proxy} not working anymore'
+                error_msg = f"Failed to play the video | Possible Reason : {proxy.split('@')[-1]} not working anymore"
             raise Exception(error_msg)
 
         elif current_time > video_len or driver.current_url != current_url:
             break
 
+    output = textwrap.fill(text=output, width=75, break_on_hyphens=False)
+    video_statistics[output] = video_statistics.get(output, 0) + 1
+    website.html_table = tabulate(video_statistics.items(), headers=headers,
+                                  showindex=True, numalign='center', stralign='center', tablefmt="html")
     return current_url
 
 
@@ -449,7 +461,7 @@ def music_and_video(proxy, position, youtube, driver, output, view_stat):
     for i in range(rand_choice):
         if i == 0:
             current_url = control_player(
-                driver, output, position, proxy, youtube)
+                driver, output, position, proxy, youtube, collect_id=True)
 
             update_view_count(position)
 
@@ -463,7 +475,8 @@ def music_and_video(proxy, position, youtube, driver, output, view_stat):
             try:
                 output = play_next_video(driver, suggested)
             except WebDriverException as e:
-                raise Exception(f'Error suggested | {e.args[0]}')
+                raise Exception(
+                    f'Error suggested | {type(e).__name__} | {e.args[0]}')
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | Found next suggested video : [{output}]" + bcolors.ENDC)
@@ -476,7 +489,7 @@ def music_and_video(proxy, position, youtube, driver, output, view_stat):
             features(driver)
 
             current_url = control_player(
-                driver, output, position, proxy, youtube)
+                driver, output, position, proxy, youtube, collect_id=False)
 
             update_view_count(position)
 
@@ -495,7 +508,8 @@ def channel_or_endscreen(proxy, position, youtube, driver, view_stat, current_ur
             try:
                 output, log, option = play_from_channel(driver, channel_name)
             except WebDriverException as e:
-                raise Exception(f'Error channel | {e.args[0]}')
+                raise Exception(
+                    f'Error channel | {type(e).__name__} | {e.args[0]}')
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | {log}" + bcolors.ENDC)
@@ -506,7 +520,8 @@ def channel_or_endscreen(proxy, position, youtube, driver, view_stat, current_ur
             try:
                 output = play_end_screen_video(driver)
             except WebDriverException as e:
-                raise Exception(f'Error end screen | {e.args[0]}')
+                raise Exception(
+                    f'Error end screen | {type(e).__name__} | {e.args[0]}')
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | Video played from end screen : [{output}]" + bcolors.ENDC)
@@ -538,7 +553,7 @@ def windows_kill_drivers():
 
 
 def quit_driver(driver, data_dir):
-    if driver in driver_dict:
+    if driver and driver in driver_dict:
         driver.quit()
         if data_dir in temp_folders:
             temp_folders.remove(data_dir)
@@ -553,6 +568,8 @@ def quit_driver(driver, data_dir):
 
 def main_viewer(proxy_type, proxy, position):
     global width, viewports
+    driver = None
+    data_dir = None
 
     if cancel_all:
         raise KeyboardInterrupt
@@ -595,6 +612,7 @@ def main_viewer(proxy_type, proxy, position):
 
             while proxy in bad_proxies:
                 bad_proxies.remove(proxy)
+                sleep(1)
 
             patched_driver = os.path.join(
                 patched_drivers, f'chromedriver_{position%threads}{exe_name}')
@@ -668,12 +686,11 @@ def main_viewer(proxy_type, proxy, position):
             status = quit_driver(driver=driver, data_dir=data_dir)
 
         except Exception as e:
-            *_, exc_tb = sys.exc_info()
             print(timestamp() + bcolors.FAIL +
-                  f"Worker {position} | Line : {exc_tb.tb_lineno} | " + str(e.args[0]) + bcolors.ENDC)
+                  f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}" + bcolors.ENDC)
 
             create_html(
-                {"#f14c4c": f"Worker {position} | Line : {exc_tb.tb_lineno} | " + str(e.args[0])})
+                {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}"})
 
             status = quit_driver(driver=driver, data_dir=data_dir)
 
@@ -689,10 +706,10 @@ def main_viewer(proxy_type, proxy, position):
 
     except Exception as e:
         print(timestamp() + bcolors.FAIL +
-              f"Worker {position} | {e.args[0]}" + bcolors.ENDC)
+              f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}" + bcolors.ENDC)
 
         create_html(
-            {"#f14c4c": f"Worker {position} | {e.args[0]}"})
+            {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}"})
 
 
 def get_proxy_list():
@@ -794,7 +811,7 @@ def view_video(position):
 
 
 def main():
-    global cancel_all, proxy_list, total_proxies, threads, hash_config, futures
+    global cancel_all, proxy_list, total_proxies, threads, hash_config, futures, cpu_usage
 
     cancel_all = False
     start_time = time()
@@ -819,7 +836,8 @@ def main():
     if api:
         threads += 1
 
-    pool_number = [i for i in range(total_proxies)]
+    loop = 0
+    pool_number = list(range(total_proxies))
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = [executor.submit(view_video, position)
@@ -830,7 +848,16 @@ def main():
             while not_done:
                 freshly_done, not_done = wait(not_done, timeout=1)
                 done |= freshly_done
-                sleep(15)
+
+                loop += 1
+                for _ in range(70):
+                    cpu = str(psutil.cpu_percent(0.2))
+                    cpu_usage = cpu + '%' + ' ' * \
+                        (5-len(cpu)) if cpu != '0.0' else cpu_usage
+
+                if loop % 40 == 0:
+                    print(tabulate(video_statistics.items(),
+                          headers=headers, showindex=True, tablefmt="pretty"))
 
                 if len(view) >= views:
                     print(timestamp() + bcolors.WARNING +
@@ -886,7 +913,7 @@ if __name__ == '__main__':
 
     clean_exe_temp(folder='youtube_viewer')
     date_fmt = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
-    cpu_usage = str(psutil.cpu_percent())
+    cpu_usage = str(psutil.cpu_percent(1))
     update_chrome_version()
     check_update()
     osname, exe_name = download_driver(patched_drivers=patched_drivers)

@@ -177,16 +177,16 @@ def play_music(driver):
 
 
 def type_keyword(driver, keyword, retry=False):
-    input_keyword = driver.find_element(By.CSS_SELECTOR, 'input#search')
 
     if retry:
         for _ in range(30):
             try:
-                input_keyword.click()
+                driver.find_element(By.CSS_SELECTOR, 'input#search').click()
                 break
             except WebDriverException:
                 sleep(3)
 
+    input_keyword = driver.find_element(By.CSS_SELECTOR, 'input#search')
     input_keyword.clear()
     for letter in keyword:
         input_keyword.send_keys(letter)
