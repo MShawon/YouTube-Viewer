@@ -42,25 +42,22 @@ def skip_again(driver):
 
 
 def skip_initial_ad(driver, video, duration_dict):
-    try:
-        video_len = duration_dict[video]
-        if video_len > 30:
-            bypass_popup(driver)
-            try:
-                skip_ad = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
-                    (By.CLASS_NAME, "ytp-ad-skip-button-container")))
+    video_len = duration_dict.get(video, 0)
+    if video_len > 30:
+        bypass_popup(driver)
+        try:
+            skip_ad = WebDriverWait(driver, 15).until(EC.element_to_be_clickable(
+                (By.CLASS_NAME, "ytp-ad-skip-button-container")))
 
-                ad_duration = driver.find_element(
-                    By.CLASS_NAME, 'ytp-time-duration').get_attribute('innerText')
-                ad_duration = sum(x * int(t)
-                                  for x, t in zip([60, 1], ad_duration.split(":")))
-                ad_duration = ad_duration * uniform(.01, .1)
-                sleep(ad_duration)
-                skip_ad.click()
-            except WebDriverException:
-                skip_again(driver)
-    except KeyError:
-        pass
+            ad_duration = driver.find_element(
+                By.CLASS_NAME, 'ytp-time-duration').get_attribute('innerText')
+            ad_duration = sum(x * int(t)
+                              for x, t in zip([60, 1], ad_duration.split(":")))
+            ad_duration = ad_duration * uniform(.01, .1)
+            sleep(ad_duration)
+            skip_ad.click()
+        except WebDriverException:
+            skip_again(driver)
 
 
 def save_bandwidth(driver):
@@ -149,25 +146,38 @@ def play_next_video(driver, suggested):
         else:
             break
 
-    js = f'''
-    var html = '<a class="yt-simple-endpoint style-scope yt-formatted-string" ' +
-    'spellcheck="false" href="/watch?v={video_id}&t=0s" ' +
-    'dir="auto">https://www.youtube.com/watch?v={video_id}</a><br>'
+    try:
+        driver.execute_script(
+            'document.querySelector("tp-yt-paper-button#expand").click()')
+        js = f'''
+        var html = '<a class="yt-simple-endpoint style-scope yt-formatted-string" ' +
+        'spellcheck="false" href="/watch?v={video_id}&t=0s" ' +
+        'dir="auto">https://www.youtube.com/watch?v={video_id}</a><br>'
 
-    var element = document.querySelector("#description > yt-formatted-string")
+        var element = document.querySelector("#description > ytd-text-inline-expander > yt-formatted-string");
 
-    element.insertAdjacentHTML( 'afterbegin', html );
-    '''
+        element.insertAdjacentHTML( 'afterbegin', html );
+        '''
+    except WebDriverException:
+        js = f'''
+        var html = '<a class="yt-simple-endpoint style-scope yt-formatted-string" ' +
+        'spellcheck="false" href="/watch?v={video_id}&t=0s" ' +
+        'dir="auto">https://www.youtube.com/watch?v={video_id}</a><br>'
+
+        var elements = document.querySelectorAll("#description > yt-formatted-string");
+        var element = elements[elements.length- 1];
+
+        element.insertAdjacentHTML( 'afterbegin', html );
+        '''
 
     driver.execute_script(js)
 
     find_video = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
         (By.XPATH, f'//a[@href="/watch?v={video_id}&t=0s"]')))
-    driver.execute_script(
-        "arguments[0].scrollIntoViewIfNeeded();", find_video)
+    driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", find_video)
 
     previous_title = driver.title
-    ensure_click(driver, find_video)
+    driver.execute_script("arguments[0].click();", find_video)
     wait_for_new_page(driver=driver, previous_url=False,
                       previous_title=previous_title)
 
@@ -179,13 +189,17 @@ def play_from_channel(driver, actual_channel):
         By.CSS_SELECTOR, 'ytd-video-owner-renderer a')[randint(0, 1)]
     driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", channel)
     previous_title = driver.title
-    ensure_click(driver, channel)
+    driver.execute_script("arguments[0].click();", channel)
     wait_for_new_page(driver=driver, previous_url=False,
                       previous_title=previous_title)
 
     channel_name = driver.title[:-10]
 
     if randint(1, 2) == 1:
+        if channel_name != actual_channel:
+            raise Exception(
+                f"Accidentally opened another channel : {channel_name}. Closing it...")
+
         x = randint(30, 50)
         sleep(x)
         output = driver.find_element(

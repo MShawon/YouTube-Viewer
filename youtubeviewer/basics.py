@@ -109,6 +109,7 @@ def get_driver(background, viewports, agent, auth_required, path, proxy, proxy_t
              "profile.default_content_setting_values.notifications": 2,
              "download_restrictions": 3}
     options.add_experimental_option("prefs", prefs)
+    options.add_experimental_option('extensionLoadTimeout', 120000)
     options.add_argument(f"user-agent={agent}")
     options.add_argument("--mute-audio")
     options.add_argument('--no-sandbox')
@@ -177,7 +178,6 @@ def play_music(driver):
 
 
 def type_keyword(driver, keyword, retry=False):
-
     if retry:
         for _ in range(30):
             try:

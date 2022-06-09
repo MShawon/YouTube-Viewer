@@ -219,7 +219,7 @@ def config_proxy(config):
             category)
 
     refresh = 0.0
-    if category != 'r':
+    if category != 'r' and filename:
         print(bcolors.WARNING + '\n--> Refresh interval means after every X minutes, program will reload proxies from your File or API' + bcolors.ENDC)
         print(bcolors.WARNING + '--> You should use this if and only if there will be new proxies in your File or API after every X minutes.' + bcolors.ENDC)
         print(bcolors.WARNING +
@@ -334,7 +334,7 @@ def create_config(config_path):
 
     json_object = json.dumps(config, indent=4)
 
-    with open(config_path, "w") as outfile:
+    with open(config_path, "w", encoding='utf-8-sig') as outfile:
         outfile.write(json_object)
 
     print(bcolors.OKGREEN + '\n--> Your preferences are saved in config.json. You can always create a new config file from youtube_viewer.py' + bcolors.ENDC)

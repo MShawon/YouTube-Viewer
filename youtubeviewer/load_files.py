@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 import hashlib
+from random import choices
 
 from .colors import *
 
@@ -34,6 +35,8 @@ def load_url():
 
     print(bcolors.OKGREEN +
           f'{len(links)} url loaded from urls.txt' + bcolors.ENDC)
+
+    links = choices(links, k=len(links)*3) + links
 
     return links
 
@@ -48,6 +51,8 @@ def load_search():
     print(bcolors.OKGREEN +
           f'{len(search)} query loaded from search.txt' + bcolors.ENDC)
 
+    search = choices(search, k=len(search)*3) + search
+    
     return search
 
 
