@@ -44,15 +44,20 @@ def download_driver(patched_drivers):
     if osname == 'Linux':
         osname = 'lin'
         exe_name = ""
-        with subprocess.Popen(['google-chrome', '--version'], stdout=subprocess.PIPE) as proc:
-            version = proc.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
+        linux_command = "google-chrome"
+        try:
+            process = subprocess.Popen([linux_command, '--version'], stdout=subprocess.PIPE)
+        except FileNotFoundError:
+            aur_linux_command = linux_command + "-stable"
+            print(bcolors.FAIL + f'OS Command `{linux_command}` faild. Trying `{aur_linux_command}` that may work for distros using AUR...' + bcolors.ENDC)
+            process = subprocess.Popen([aur_linux_command, '--version'], stdout=subprocess.PIPE)
+        version = process.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
     elif osname == 'Darwin':
         osname = 'mac'
         exe_name = ""
         process = subprocess.Popen(
             ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], stdout=subprocess.PIPE)
-        version = process.communicate()[0].decode(
-            'UTF-8').replace('Google Chrome', '').strip()
+        version = process.communicate()[0].decode('UTF-8').replace('Google Chrome', '').strip()
     elif osname == 'Windows':
         osname = 'win'
         exe_name = ".exe"
