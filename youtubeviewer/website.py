@@ -35,6 +35,7 @@ MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December']
 
 console = []
+summary_table = ''
 html_table = ''
 database = 'database.db'
 
@@ -132,7 +133,7 @@ def start_server(host, port, debug=False):
 
     @app.route('/update', methods=['POST'])
     def update():
-        return jsonify({'result': 'success', 'console': console[:200], 'table': html_table[8:-9]})
+        return jsonify({'result': 'success', 'console': console[:200], 'summary': summary_table[8:-9], 'table': html_table[8:-9]})
 
     @app.route('/graph', methods=['GET', 'POST'])
     def graph():

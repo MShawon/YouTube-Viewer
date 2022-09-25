@@ -47,6 +47,7 @@ function queryLogs() {
         for (i = 1; i < 201; i++) {
             $('#logs-' + i).html(data.console[i - 1]);
         }
+        $('#summary_table').html(data.summary);
         $('#video_statistics').html(data.table);
     });
 }

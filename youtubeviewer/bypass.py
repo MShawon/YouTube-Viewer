@@ -64,14 +64,14 @@ def personalization(driver):
 
 def bypass_consent(driver):
     try:
-        consent = driver.find_element(By.XPATH, "//button[@jsname='higCR']")
+        consent = driver.find_element(By.XPATH, "//button[@jsname='b3VHJd']")
         driver.execute_script("arguments[0].scrollIntoView();", consent)
-        consent.click()
+        consent.submit()
         if 'consent' in driver.current_url:
             personalization(driver)
     except WebDriverException:
         consent = driver.find_element(
-            By.XPATH, "//input[@type='submit' and @value='I agree']")
+            By.XPATH, "//button[@aria-label='Accept all']")
         driver.execute_script("arguments[0].scrollIntoView();", consent)
         consent.submit()
         if 'consent' in driver.current_url:

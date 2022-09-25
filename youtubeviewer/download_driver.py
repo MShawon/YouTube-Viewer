@@ -44,7 +44,7 @@ def download_driver(patched_drivers):
     if osname == 'Linux':
         osname = 'lin'
         exe_name = ""
-        with subprocess.Popen(['google-chrome', '--version'], stdout=subprocess.PIPE) as proc:
+        with subprocess.Popen(['google-chrome-stable', '--version'], stdout=subprocess.PIPE) as proc:
             version = proc.stdout.read().decode('utf-8').replace('Google Chrome', '').strip()
     elif osname == 'Darwin':
         osname = 'mac'

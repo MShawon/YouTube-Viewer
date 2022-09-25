@@ -46,7 +46,7 @@ from youtubeviewer.proxies import *
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
-SCRIPT_VERSION = '1.7.4'
+SCRIPT_VERSION = '1.7.5'
 
 print(bcolors.OKGREEN + """
 
@@ -85,6 +85,7 @@ hash_config = None
 driver_dict = {}
 duration_dict = {}
 checked = {}
+summary = {}
 video_statistics = {}
 view = []
 bad_proxies = []
@@ -103,7 +104,9 @@ driver_identifier = os.path.join(cwd, 'patched_drivers', 'chromedriver')
 DATABASE = os.path.join(cwd, 'database.db')
 DATABASE_BACKUP = os.path.join(cwd, 'database_backup.db')
 
-headers = ['Index', 'Video Title', 'Views']
+animation = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+headers_1 = ['Worker', 'Video Title', 'Watch / Actual Duration']
+headers_2 = ['Index', 'Video Title', 'Views']
 
 width = 0
 viewports = ['2560,1440', '1920,1080', '1440,900',
@@ -385,9 +388,15 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
     if video_len == 0:
         raise Exception('Video player is not loading...')
 
+    actual_duration = strftime(
+        "%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
     video_len = video_len*uniform(minimum, maximum)
+    duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
 
-    duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len))
+    summary[position] = [position, output, f'{duration} / {actual_duration}']
+    website.summary_table = tabulate(
+        summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
+
     print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
           f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
 
@@ -435,10 +444,15 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         elif current_time > video_len or driver.current_url != current_url:
             break
 
+    summary.pop(position, None)
+    website.summary_table = tabulate(
+        summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
+
     output = textwrap.fill(text=output, width=75, break_on_hyphens=False)
     video_statistics[output] = video_statistics.get(output, 0) + 1
-    website.html_table = tabulate(video_statistics.items(), headers=headers,
+    website.html_table = tabulate(video_statistics.items(), headers=headers_2,
                                   showindex=True, numalign='center', stralign='center', tablefmt="html")
+
     return current_url, current_channel
 
 
@@ -557,11 +571,12 @@ def windows_kill_drivers():
     for process in constructor.Win32_Process(["CommandLine", "ProcessId"]):
         try:
             if 'UserAgentClientHint' in process.CommandLine:
-                # print(f'Killing PID : {process.ProcessId}')
+                print(f'Killing PID : {process.ProcessId}', end="\r")
                 subprocess.Popen(['taskkill', '/F', '/PID', f'{process.ProcessId}'],
                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
         except Exception:
             pass
+    print('\n')
 
 
 def quit_driver(driver, data_dir):
@@ -868,7 +883,7 @@ def main():
 
                 if loop % 40 == 0:
                     print(tabulate(video_statistics.items(),
-                          headers=headers, showindex=True, tablefmt="pretty"))
+                          headers=headers_2, showindex=True, tablefmt="pretty"))
 
                 if category == 'r' and proxy_api:
                     proxies_from_api = scrape_api(link=filename)
@@ -946,9 +961,18 @@ if __name__ == '__main__':
 
         if len(config) == 11:
             print(json.dumps(config, indent=4))
-            previous = str(input(
-                bcolors.OKBLUE + 'Config file exists! Do you want to continue with previous saved preferences ? [Yes/No] : ' + bcolors.ENDC)).lower()
-            if previous == 'n' or previous == 'no':
+            print(bcolors.OKCYAN + 'Config file exists! Program will start automatically after 20 seconds...' + bcolors.ENDC)
+            print(bcolors.FAIL + 'If you want to create a new config file PRESS CTRL+C within 20 seconds!' + bcolors.ENDC)
+            start = time()
+            try:
+                i = 0
+                while i < 96:
+                    print(bcolors.OKBLUE + f"{time() - start:.0f} seconds remaining " +
+                          animation[i % len(animation)] + bcolors.ENDC, end="\r")
+                    i += 1
+                    sleep(0.2)
+                print('\n')
+            except KeyboardInterrupt:
                 create_config(config_path=config_path)
         else:
             print(bcolors.FAIL + 'Previous config file is not compatible with the latest script! Create a new one...' + bcolors.ENDC)
