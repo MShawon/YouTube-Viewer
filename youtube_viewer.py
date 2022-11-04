@@ -46,7 +46,7 @@ from youtubeviewer.proxies import *
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
-SCRIPT_VERSION = '1.7.5'
+SCRIPT_VERSION = '1.7.6'
 
 print(bcolors.OKGREEN + """
 
@@ -320,18 +320,24 @@ def youtube_normal(method, keyword, video_title, driver, output):
             (By.ID, 'movie_player')))
     except WebDriverException:
         raise Exception(
-            "Slow internet speed or Stuck at recaptcha! Can't load YouTube...")
+            "Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube...")
 
     features(driver)
 
-    view_stat = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, '#count span'))).text
+    try:
+        view_stat = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '#count span'))).text
+        if not view_stat:
+            raise WebDriverException
+    except WebDriverException:
+        view_stat = driver.find_element(
+            By.XPATH, '//*[@id="info"]/span[1]').text
 
     return view_stat
 
 
 def youtube_music(driver):
-    if 'coming-soon' in driver.current_url:
+    if 'coming-soon' in driver.title or 'not available' in driver.title:
         raise Exception(
             "YouTube Music is not available in your area!")
     try:
@@ -339,14 +345,17 @@ def youtube_music(driver):
             (By.XPATH, '//*[@id="player-page"]')))
     except WebDriverException:
         raise Exception(
-            "Slow internet speed or Stuck at recaptcha! Can't load YouTube...")
+            "Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube...")
 
     bypass_popup(driver)
 
     play_music(driver)
 
+    output = driver.find_element(
+        By.XPATH, '//ytmusic-player-bar//yt-formatted-string').text
     view_stat = 'music'
-    return view_stat
+
+    return view_stat, output
 
 
 def spoof_geolocation(proxy_type, proxy, driver):
@@ -412,8 +421,11 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         except Exception:
             pass
 
-    current_channel = driver.find_element(
-        By.CSS_SELECTOR, '#upload-info a').text
+    try:
+        current_channel = driver.find_element(
+            By.CSS_SELECTOR, '#upload-info a').text
+    except WebDriverException:
+        current_channel = 'Unknown'
 
     error = 0
     loop = int(video_len/4)
@@ -459,8 +471,14 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
 def youtube_live(proxy, position, driver, output):
     error = 0
     while True:
-        view_stat = driver.find_element(
-            By.CSS_SELECTOR, '#count span').text
+        try:
+            view_stat = driver.find_element(
+                By.CSS_SELECTOR, '#count span').text
+            if not view_stat:
+                raise WebDriverException
+        except WebDriverException:
+            view_stat = driver.find_element(
+                By.XPATH, '//*[@id="info"]/span[1]').text
         if 'watching' in view_stat:
             print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
                   f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
@@ -504,7 +522,7 @@ def music_and_video(proxy, position, youtube, driver, output, view_stat):
                 output = play_next_video(driver, suggested)
             except WebDriverException as e:
                 raise Exception(
-                    f'Error suggested | {type(e).__name__} | {e.args[0]}')
+                    f"Error suggested | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | Found next suggested video : [{output}]" + bcolors.ENDC)
@@ -535,7 +553,7 @@ def channel_or_endscreen(proxy, position, youtube, driver, view_stat, current_ur
                     driver, current_channel)
             except WebDriverException as e:
                 raise Exception(
-                    f'Error channel | {type(e).__name__} | {e.args[0]}')
+                    f"Error channel | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | {log}" + bcolors.ENDC)
@@ -547,7 +565,7 @@ def channel_or_endscreen(proxy, position, youtube, driver, view_stat, current_ur
                 output = play_end_screen_video(driver)
             except WebDriverException as e:
                 raise Exception(
-                    f'Error end screen | {type(e).__name__} | {e.args[0]}')
+                    f"Error end screen | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | Video played from end screen : [{output}]" + bcolors.ENDC)
@@ -693,7 +711,7 @@ def main_viewer(proxy_type, proxy, position):
                 view_stat = youtube_normal(
                     method, keyword, video_title, driver, output)
             else:
-                view_stat = youtube_music(driver)
+                view_stat, output = youtube_music(driver)
 
             if 'watching' in view_stat:
                 youtube_live(proxy, position, driver, output)
@@ -714,13 +732,13 @@ def main_viewer(proxy_type, proxy, position):
             status = quit_driver(driver=driver, data_dir=data_dir)
 
         except Exception as e:
+            status = quit_driver(driver=driver, data_dir=data_dir)
+
             print(timestamp() + bcolors.FAIL +
-                  f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}" + bcolors.ENDC)
+                  f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
 
             create_html(
-                {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}"})
-
-            status = quit_driver(driver=driver, data_dir=data_dir)
+                {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
 
     except RequestException:
         print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " +
@@ -734,10 +752,10 @@ def main_viewer(proxy_type, proxy, position):
 
     except Exception as e:
         print(timestamp() + bcolors.FAIL +
-              f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}" + bcolors.ENDC)
+              f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
 
         create_html(
-            {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0]}"})
+            {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
 
 
 def get_proxy_list():

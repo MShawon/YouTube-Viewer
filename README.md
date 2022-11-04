@@ -160,7 +160,6 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # YouTube Music
    Can generate views on YouTube Music too. In **urls.txt** put your music link like this `https://music.youtube.com/watch?v=xxxxx`. Script will automatically load YouTube Music when it sees link have `music.youtube.com`. **Search feature is not available for this.** So you need to empty the search.txt otherwise it will start searching videos in default YouTube.
 
-   For YouTube Music use version 1.6.2 or earlier until the bug is fixed in the latest releases.
 
 # Fast VPS with Unlimited Traffic
   *[PetroSky](https://petrosky.io/mshawon) is one of the various CloudHosting services with the fastest and most convenient cloud technology. Their servers are powered by the latest **AMD RYZEN/EPYC CPUs** with High-Performance **NVMe SSD Hard Drives** that will let your application run faster than ever. You can get 2 vCPU with 4 GB ECC RAM for as low as 11.99€/month which will work very well for YouTube-Viewer script for 2 threads. Visit [PetroSky](https://petrosky.io/mshawon) to get the fastest VPS with unlimited traffic at the lowest price. Use this code `mshawon25` to get **25% discount**  on your purchase*
@@ -253,6 +252,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   To get the most out of this script you should maintain these things.
   * Don't use HEADLESS mode. Because no IP leak prevention, fingerprint defending, etc. can be done in headless mode.
   * Youtube doesn't count views from the same IP after a certain time. Like, don't expect to get 100 views from 10 proxies. If you want more views, try to use a lot of premium proxies(free proxies are flagged by most websites). DO NOT use TOR proxies.
+  * It seems Rotating proxy gives the best result. But the IP MUST NOT change on each request. Set the sticky session or TTL to 5 to 15 minutes.
   * Use both [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) and [search.txt](https://github.com/MShawon/YouTube-Viewer#search)
   * And use as many [urls](https://github.com/MShawon/YouTube-Viewer#urls) and [keyword::::title](https://github.com/MShawon/YouTube-Viewer#search) as you can. Don't use just one video.
 

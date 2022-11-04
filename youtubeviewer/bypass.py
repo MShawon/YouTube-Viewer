@@ -109,3 +109,9 @@ def bypass_other_popup(driver):
                 By.XPATH, f"//*[@id='button' and @aria-label='{popup}']").click()
         except WebDriverException:
             pass
+
+    try:
+        driver.find_element(
+            By.XPATH, '//*[@id="dismiss-button"]/yt-button-shape/button').click()
+    except WebDriverException:
+        pass

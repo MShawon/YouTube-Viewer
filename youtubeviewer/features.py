@@ -110,14 +110,15 @@ def random_command(driver):
                 driver.execute_script(
                     'document.querySelector("#movie_player").scrollIntoViewIfNeeded();')
             elif command == 'share':
-                driver.find_element(
-                    By.XPATH, "//button[@id='button' and @aria-label='Share']").click()
-                sleep(uniform(2, 5))
-                if randint(1, 2) == 1:
-                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//*[@id='button' and @aria-label='Copy']"))).click()
-                driver.find_element(
-                    By.XPATH, "//*[@id='close-button']/button[@aria-label='Cancel']").click()
+                if choices([1, 2], cum_weights=(0.9, 1.00), k=1)[0] == 2:
+                    driver.find_element(
+                        By.XPATH, "//button[@id='button' and @aria-label='Share']").click()
+                    sleep(uniform(2, 5))
+                    if randint(1, 2) == 1:
+                        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+                            (By.XPATH, "//*[@id='button' and @aria-label='Copy']"))).click()
+                    driver.find_element(
+                        By.XPATH, "//*[@id='close-button']/button[@aria-label='Cancel']").click()
             else:
                 driver.find_element(By.ID,
                                     'movie_player').send_keys(command*randint(1, 5))
@@ -154,7 +155,7 @@ def play_next_video(driver, suggested):
         'spellcheck="false" href="/watch?v={video_id}&t=0s" ' +
         'dir="auto">https://www.youtube.com/watch?v={video_id}</a><br>'
 
-        var element = document.querySelector("#description > ytd-text-inline-expander > yt-formatted-string");
+        var element = document.querySelector("#description-inline-expander > yt-formatted-string");
 
         element.insertAdjacentHTML( 'afterbegin', html );
         '''
