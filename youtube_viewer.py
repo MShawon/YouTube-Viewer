@@ -985,7 +985,7 @@ if __name__ == '__main__':
             try:
                 i = 0
                 while i < 96:
-                    print(bcolors.OKBLUE + f"{time() - start:.0f} seconds remaining " +
+                    print(bcolors.OKBLUE + f"{20 - (time() - start):.0f} seconds remaining " +
                           animation[i % len(animation)] + bcolors.ENDC, end="\r")
                     i += 1
                     sleep(0.2)
