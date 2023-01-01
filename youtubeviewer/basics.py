@@ -116,6 +116,7 @@ def get_driver(background, viewports, agent, auth_required, path, proxy, proxy_t
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-features=UserAgentClientHint')
     options.add_argument("--disable-web-security")
+    options.add_argument("--headless=chrome")
     webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
         'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
 
