@@ -239,7 +239,7 @@ def search_video(driver, keyword, video_title):
             type_keyword(driver, keyword, retry=True)
         except WebDriverException:
             raise Exception(
-                "Slow internet speed or Stuck at recaptcha! Can't perfrom search keyword")
+                "Slow internet speed or Stuck at recaptcha! Can't perform search keyword")
 
     msg = scroll_search(driver, video_title)
 
