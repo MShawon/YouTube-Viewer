@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2021-2022 MShawon
+Copyright (c) 2021-2023 MShawon
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ from time import gmtime, sleep, strftime, time
 
 import psutil
 from fake_headers import Headers, browsers
+from faker import Faker
 from requests.exceptions import RequestException
 from tabulate import tabulate
 from undetected_chromedriver.patcher import Patcher
@@ -46,7 +47,7 @@ from youtubeviewer.proxies import *
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
-SCRIPT_VERSION = '1.7.6'
+SCRIPT_VERSION = '1.8.0'
 
 print(bcolors.OKGREEN + """
 
@@ -96,6 +97,7 @@ console = []
 threads = 0
 views = 100
 
+fake = Faker()
 cwd = os.getcwd()
 patched_drivers = os.path.join(cwd, 'patched_drivers')
 config_path = os.path.join(cwd, 'config.json')
@@ -148,10 +150,10 @@ def clean_exe_temp(folder):
     if hasattr(sys, '_MEIPASS'):
         temp_name = sys._MEIPASS.split('\\')[-1]
     else:
-        if sys.version_info.minor < 7 or sys.version_info.minor > 9:
+        if sys.version_info.minor < 7 or sys.version_info.minor > 11:
             print(
                 f'Your current python version is not compatible : {sys.version}')
-            print(f'Install Python version between 3.7.x to 3.9.x to run this script')
+            print(f'Install Python version between 3.7.x to 3.11.x to run this script')
             input("")
             sys.exit()
 
@@ -171,23 +173,27 @@ def update_chrome_version():
 
 def check_update():
     api_url = 'https://api.github.com/repos/MShawon/YouTube-Viewer/releases/latest'
-    response = requests.get(api_url, timeout=30)
+    try:
+        response = requests.get(api_url, timeout=30)
 
-    RELEASE_VERSION = response.json()['tag_name']
+        RELEASE_VERSION = response.json()['tag_name']
 
-    if RELEASE_VERSION > SCRIPT_VERSION:
-        print(bcolors.OKCYAN + '#'*100 + bcolors.ENDC)
-        print(bcolors.OKCYAN + 'Update Available!!! ' +
-              f'YouTube Viewer version {SCRIPT_VERSION} needs to update to {RELEASE_VERSION} version.' + bcolors.ENDC)
+        if RELEASE_VERSION > SCRIPT_VERSION:
+            print(bcolors.OKCYAN + '#'*100 + bcolors.ENDC)
+            print(bcolors.OKCYAN + 'Update Available!!! ' +
+                  f'YouTube Viewer version {SCRIPT_VERSION} needs to update to {RELEASE_VERSION} version.' + bcolors.ENDC)
 
-        try:
-            notes = response.json()['body'].split('SHA256')[0].split('\r\n')
-            for note in notes:
-                if note:
-                    print(bcolors.HEADER + note + bcolors.ENDC)
-        except Exception:
-            pass
-        print(bcolors.OKCYAN + '#'*100 + '\n' + bcolors.ENDC)
+            try:
+                notes = response.json()['body'].split(
+                    'SHA256')[0].split('\r\n')
+                for note in notes:
+                    if note:
+                        print(bcolors.HEADER + note + bcolors.ENDC)
+            except Exception:
+                pass
+            print(bcolors.OKCYAN + '#'*100 + '\n' + bcolors.ENDC)
+    except Exception:
+        pass
 
 
 def create_html(text_dict):
@@ -358,7 +364,7 @@ def youtube_music(driver):
     return view_stat, output
 
 
-def spoof_geolocation(proxy_type, proxy, driver):
+def spoof_timezone_geolocation(proxy_type, proxy, driver):
     try:
         proxy_dict = {
             "http": f"{proxy_type}://{proxy}",
@@ -369,16 +375,36 @@ def spoof_geolocation(proxy_type, proxy, driver):
 
         if resp.status_code == 200:
             location = resp.json()
-            params = {
+            tz_params = {'timezoneId': location['timezone']}
+            latlng_params = {
                 "latitude": location['lat'],
                 "longitude": location['lon'],
                 "accuracy": randint(20, 100)
             }
-            driver.execute_cdp_cmd(
-                "Emulation.setGeolocationOverride", params)
+            info = f"ip-api.com | Lat : {location['lat']} | Lon : {location['lon']} | TZ: {location['timezone']}"
+        else:
+            raise RequestException
 
-    except (RequestException, WebDriverException):
+    except RequestException:
+        location = fake.location_on_land()
+        tz_params = {'timezoneId': location[-1]}
+        latlng_params = {
+            "latitude": location[0],
+            "longitude": location[1],
+            "accuracy": randint(20, 100)
+        }
+        info = f"Random | Lat : {location[0]} | Lon : {location[1]} | TZ: {location[-1]}"
+
+    try:
+        driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
+
+        driver.execute_cdp_cmd(
+            "Emulation.setGeolocationOverride", latlng_params)
+
+    except WebDriverException:
         pass
+
+    return info
 
 
 def control_player(driver, output, position, proxy, youtube, collect_id=True):
@@ -401,6 +427,9 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         "%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
     video_len = video_len*uniform(minimum, maximum)
     duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
+
+    if len(output) == 11:
+        output = driver.title[:-10]
 
     summary[position] = [position, output, f'{duration} / {actual_duration}']
     website.summary_table = tabulate(
@@ -683,7 +712,15 @@ def main_viewer(proxy_type, proxy, position):
 
             sleep(2)
 
-            spoof_geolocation(proxy_type, proxy, driver)
+            info = spoof_timezone_geolocation(proxy_type, proxy, driver)
+
+            isdetected = driver.execute_script('return navigator.webdriver')
+
+            print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
+                  f"{proxy} | {proxy_type.upper()} | " + bcolors.OKCYAN + f"{info} | Detected? : {isdetected}" + bcolors.ENDC)
+
+            create_html({"#3b8eea": f"Worker {position} | ",
+                        "#23d18b": f"{proxy.split('@')[-1]} | {proxy_type.upper()} | ", "#29b2d3": f"{info} | Detected? : {isdetected}"})
 
             if width == 0:
                 width = driver.execute_script('return screen.width')
@@ -981,11 +1018,11 @@ if __name__ == '__main__':
             print(json.dumps(config, indent=4))
             print(bcolors.OKCYAN + 'Config file exists! Program will start automatically after 20 seconds...' + bcolors.ENDC)
             print(bcolors.FAIL + 'If you want to create a new config file PRESS CTRL+C within 20 seconds!' + bcolors.ENDC)
-            start = time()
+            start = time() + 20
             try:
                 i = 0
                 while i < 96:
-                    print(bcolors.OKBLUE + f"{time() - start:.0f} seconds remaining " +
+                    print(bcolors.OKBLUE + f"{start - time():.0f} seconds remaining " +
                           animation[i % len(animation)] + bcolors.ENDC, end="\r")
                     i += 1
                     sleep(0.2)

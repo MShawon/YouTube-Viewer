@@ -29,7 +29,6 @@ from .features import *
 WEBRTC = os.path.join('extension', 'webrtc_control.zip')
 ACTIVE = os.path.join('extension', 'always_active.zip')
 FINGERPRINT = os.path.join('extension', 'fingerprint_defender.zip')
-TIMEZONE = os.path.join('extension', 'spoof_timezone.zip')
 CUSTOM_EXTENSIONS = glob(os.path.join('extension', 'custom_extension', '*.zip')) + \
     glob(os.path.join('extension', 'custom_extension', '*.crx'))
 
@@ -122,7 +121,6 @@ def get_driver(background, viewports, agent, auth_required, path, proxy, proxy_t
     if not background:
         options.add_extension(WEBRTC)
         options.add_extension(FINGERPRINT)
-        options.add_extension(TIMEZONE)
         options.add_extension(ACTIVE)
 
         if CUSTOM_EXTENSIONS:
@@ -210,8 +208,14 @@ def scroll_search(driver, video_title):
             if driver.find_element(By.XPATH, f'//ytd-item-section-renderer[{i}]').text == 'No more results':
                 msg = 'failed'
                 break
-            find_video = section.find_element(
-                By.XPATH, f'//*[@title="{video_title}"]')
+
+            if len(video_title) == 11:
+                find_video = section.find_element(
+                    By.XPATH, f'//a[@id="video-title" and contains(@href, "{video_title}")]')
+            else:
+                find_video = section.find_element(
+                    By.XPATH, f'//*[@title="{video_title}"]')
+
             driver.execute_script(
                 "arguments[0].scrollIntoViewIfNeeded();", find_video)
             sleep(1)
@@ -239,14 +243,14 @@ def search_video(driver, keyword, video_title):
             type_keyword(driver, keyword, retry=True)
         except WebDriverException:
             raise Exception(
-                "Slow internet speed or Stuck at recaptcha! Can't perfrom search keyword")
+                "Slow internet speed or Stuck at recaptcha! Can't perform search keyword")
 
     msg = scroll_search(driver, video_title)
 
     if msg == 'failed':
         bypass_popup(driver)
 
-        filters = driver.find_element(By.CSS_SELECTOR, '#filter-menu a')
+        filters = driver.find_element(By.CSS_SELECTOR, '#filter-menu button')
         driver.execute_script('arguments[0].scrollIntoViewIfNeeded()', filters)
         sleep(randint(1, 3))
         ensure_click(driver, filters)

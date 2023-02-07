@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2021-2022 MShawon
+Copyright (c) 2021-2023 MShawon
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -216,7 +216,7 @@ def play_from_channel(driver, actual_channel):
 
         driver.refresh()
         videos = WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.XPATH, "//a[@id='video-title']")))
+            EC.presence_of_all_elements_located((By.XPATH, "//a[@id='video-title-link']")))
         video = choice(videos)
         driver.execute_script("arguments[0].scrollIntoViewIfNeeded();", video)
         sleep(randint(2, 5))

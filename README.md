@@ -63,7 +63,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 
 # Requirements
- * **Python 3.7.x-3.9.x**
+ * **Python 3.7.x-3.11.x**
  * High speed Internet Connection
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
@@ -105,7 +105,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
       * [Windows from source code](https://github.com/MShawon/YouTube-Viewer#installation)    
       * [Linux / Mac from source code](https://github.com/MShawon/YouTube-Viewer#linux--mac)
    2) Then put your video links in the [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) file
-   3) To search your video on YouTube and then play it put the search keywords and video title in the [search.txt](https://github.com/MShawon/YouTube-Viewer#search) file
+   3) To search for your video on YouTube and then play it, put the search keywords and video title in the [search.txt](https://github.com/MShawon/YouTube-Viewer#search) file
    4) Get your [proxy](https://github.com/MShawon/YouTube-Viewer#proxies) list
    5) Run the script and follow the instructions from there.
 
@@ -146,9 +146,9 @@ Simple program to increase YouTube views written in Python. Works with live stre
   2) If you have any external link which will redirect to your youtube video you can use that too. Example : when you post a YouTube video link in **twitter** and you hit play on twitter, you will get a link like this `https://t.co/xxxxxxxxxx?amp=1`. This is helpful because YouTube will see that views are coming from External Source like twitter in this example.
 
 # Search
-  Program can search youtube with the keyword you want and find video with video title. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title. Put keyword and title like this format `keyword :::: video title` in **search.txt**. You can use same `video title` for multiple `keyword` too.
+  Program can search youtube with the keyword you want and find the video with video title or video id. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title or video id. Put keyword and title like this format `keyword :::: video title` or `keyword :::: video id` in **search.txt**. Always use multiple `keyword` for the same `video title` or `video id`.
 
-  *If you don't know any keyword just put your `video title :::: video title` in search.txt*
+  *If you don't know any keyword just put your `video title :::: video title` or `video title :::: video id` in search.txt*
 
    
 # Live Stream
@@ -171,7 +171,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   
 * ## Installation
 
-  First, make sure you have installed git and Python version between 3.7.x to 3.9.x
+  First, make sure you have installed git and Python version between 3.7.x to 3.11.x
   
   Open command prompt and type
   ```
@@ -210,7 +210,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # Linux / Mac
 * ## Installation
 
-  First, make sure you have installed git and Python version between 3.7.x to 3.9.x
+  First, make sure you have installed git and Python version between 3.7.x to 3.11.x
   
   Open your favourite terminal and run
    ```
@@ -252,7 +252,8 @@ Simple program to increase YouTube views written in Python. Works with live stre
   To get the most out of this script you should maintain these things.
   * Don't use HEADLESS mode. Because no IP leak prevention, fingerprint defending, etc. can be done in headless mode.
   * Youtube doesn't count views from the same IP after a certain time. Like, don't expect to get 100 views from 10 proxies. If you want more views, try to use a lot of premium proxies(free proxies are flagged by most websites). DO NOT use TOR proxies.
-  * It seems Rotating proxy gives the best result. But the IP MUST NOT change on each request. Set the sticky session or TTL to 5 to 15 minutes.
+  * In a nutshell, you need Rotating proxies to get the best result. But the IP MUST NOT change on each request. Set the sticky session or TTL to 5 to 15 minutes.
+  * For IPRoyal it would be *Royal Residential Proxies*, not Static Residential proxies
   * Use both [urls.txt](https://github.com/MShawon/YouTube-Viewer#urls) and [search.txt](https://github.com/MShawon/YouTube-Viewer#search)
   * And use as many [urls](https://github.com/MShawon/YouTube-Viewer#urls) and [keyword::::title](https://github.com/MShawon/YouTube-Viewer#search) as you can. Don't use just one video.
 
