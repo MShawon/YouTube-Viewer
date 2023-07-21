@@ -28,7 +28,10 @@ import sys
 
 import undetected_chromedriver._compat as uc
 
-from .colors import *
+try:
+    from .colors import *
+except Exception:
+    from colors import *
 
 CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
           '{8237E44A-0054-442C-B6B6-EA0509993955}',
@@ -104,10 +107,11 @@ def download_driver(patched_drivers):
             pass
 
         shutil.rmtree(patched_drivers, ignore_errors=True)
-
-    major_version = version.split('.')[0]
-
-    uc.TARGET_VERSION = major_version
+    
+    if osname != 'mac':
+        # these 2 lines break on my macbook
+        major_version = version.split('.')[0]
+        uc.TARGET_VERSION = major_version
 
     uc.install()
 
