@@ -5,6 +5,6 @@ patched_drivers/
 database.db
 database_backup.db
 config.json
-chromedriver.exe
+chromedriver*
 version.txt
 *.log

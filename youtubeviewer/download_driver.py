@@ -104,10 +104,10 @@ def download_driver(patched_drivers):
             pass
 
         shutil.rmtree(patched_drivers, ignore_errors=True)
-
-    major_version = version.split('.')[0]
-
-    uc.TARGET_VERSION = major_version
+    
+        # seems like the url naming convention has changed
+        #major_version = version.split('.')[0]
+        #uc.TARGET_VERSION = major_version
 
     uc.install()
 
