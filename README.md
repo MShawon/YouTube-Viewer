@@ -152,6 +152,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   Program can search youtube with the keyword you want and find the video with video title or video id. To do this you need to know what keyword can find your video on youtube search engine. Also you need to provide **exact** video title or video id. Put keyword and title like this format `keyword :::: video title` or `keyword :::: video id` in **search.txt**. Always use multiple `keyword` for the same `video title` or `video id`.
 
   *If you don't know any keyword just put your `video title :::: video title` or `video title :::: video id` in search.txt*
+  *If you are searching for shorts then include `shorts` in your keyword. Example: `keyword shorts :::: video title` or `keyword shorts :::: video id`*
 
    
 # Live Stream
@@ -163,6 +164,9 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # YouTube Music
    Can generate views on YouTube Music too. In **urls.txt** put your music link like this `https://music.youtube.com/watch?v=xxxxx`. Script will automatically load YouTube Music when it sees link have `music.youtube.com`. **Search feature is not available for this.** So you need to empty the search.txt otherwise it will start searching videos in default YouTube.
 
+# YouTubr Shorts
+   Can generate views on YouTube Shorts too. In **urls.txt** put your shorts link like this `https://www.youtube.com/shorts/xxxxx`. Script will automatically load YouTube Shorts when it sees link have `youtube.com/shorts`. 
+   **For best results if using shorts keep the view duration over 100%**
 
 # Fast VPS with Unlimited Traffic
   *[PetroSky](https://petrosky.io/mshawon) is one of the various CloudHosting services with the fastest and most convenient cloud technology. Their servers are powered by the latest **AMD RYZEN/EPYC CPUs** with High-Performance **NVMe SSD Hard Drives** that will let your application run faster than ever. You can get 2 vCPU with 4 GB ECC RAM for as low as 11.99€/month which will work very well for YouTube-Viewer script for 2 threads. Visit [PetroSky](https://petrosky.io/mshawon) to get the fastest VPS with unlimited traffic at the lowest price. Use this code `mshawon25` to get **25% discount**  on your purchase*

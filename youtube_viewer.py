@@ -28,6 +28,7 @@ import re
 import textwrap
 from concurrent.futures import ThreadPoolExecutor, wait
 from time import gmtime, sleep, strftime, time
+from enum import Enum
 
 import psutil
 from fake_headers import Headers, browsers
@@ -122,6 +123,21 @@ referers = choices(referers, k=len(referers)*3)
 website.console = console
 website.database = DATABASE
 
+class AccessMethod(Enum):
+    DIRECT = 1
+    SEARCH = 2
+
+    def __str__(self):
+        return str(self.name)
+
+class YouTubeType(Enum):
+    VIDEO = 1
+    MUSIC = 2
+    SHORTS = 3
+    LIVE = 4
+
+    def __str__(self):
+        return str(self.name)
 
 def monkey_patch_exe(self):
     linect = 0
@@ -222,32 +238,40 @@ def detect_file_change():
         queries = load_search()
         suggested.clear()
 
+def get_youtube_type(url):
+    if 'music.youtube.com' in url:
+        return YouTubeType.MUSIC
+    elif '/shorts' in url:
+        return YouTubeType.SHORTS
+    else:
+        return YouTubeType.VIDEO
 
 def direct_or_search(position):
     keyword = None
     video_title = None
+    youtube = None
     if position % 2:
         try:
-            method = 1
+            method = AccessMethod.DIRECT
             url = choice(urls)
-            if 'music.youtube.com' in url:
-                youtube = 'Music'
-            else:
-                youtube = 'Video'
+            youtube = get_youtube_type(url)
         except IndexError:
             raise Exception("Your urls.txt is empty!")
 
     else:
         try:
-            method = 2
+            method = AccessMethod.SEARCH
             query = choice(queries)
             keyword = query[0]
             video_title = query[1]
             url = "https://www.youtube.com"
-            youtube = 'Video'
+            if 'shorts' in keyword.lower() or 'shorts' in video_title.lower():
+                url += "/shorts"
+            youtube = get_youtube_type(url)
         except IndexError:
             try:
-                youtube = 'Music'
+                youtube = YouTubeType.MUSIC
+                method = AccessMethod.SEARCH
                 url = choice(urls)
                 if 'music.youtube.com' not in url:
                     raise Exception
@@ -273,8 +297,8 @@ def features(driver):
 def update_view_count(position):
     view.append(position)
     view_count = len(view)
-    print(timestamp() + bcolors.OKCYAN +
-          f'Worker {position} | View added : {view_count}' + bcolors.ENDC)
+    
+    print(timestamp() + bcolors.OKCYAN +f'Worker {position} | View added : {view_count}' + bcolors.ENDC)
 
     create_html({"#29b2d3": f'Worker {position} | View added : {view_count}'})
 
@@ -288,77 +312,117 @@ def update_view_count(position):
 
 def set_referer(position, url, method, driver):
     referer = choice(referers)
-    if referer:
-        if method == 2 and 't.co/' in referer:
-            driver.get(url)
-        else:
-            if 'search.yahoo.com' in referer:
-                driver.get('https://duckduckgo.com/')
-                driver.execute_script(
-                    "window.history.pushState('page2', 'Title', arguments[0]);", referer)
+    try:
+        if referer:
+            if method == AccessMethod.SEARCH and 't.co/' in referer:
+                driver.get(url)
             else:
-                driver.get(referer)
+                if 'search.yahoo.com' in referer:
+                    driver.get('https://duckduckgo.com/')
+                    driver.execute_script("window.history.pushState('page2', 'Title', arguments[0]);", referer)
+                else:
+                    driver.get(referer)
 
-            driver.execute_script(
-                "window.location.href = '{}';".format(url))
+                driver.execute_script("window.location.href = '{}';".format(url))
 
-        print(timestamp() + bcolors.OKBLUE +
-              f"Worker {position} | Referer used : {referer}" + bcolors.ENDC)
+            print(timestamp() 
+                + bcolors.OKBLUE + f"Worker {position:4} | "
+                + bcolors.OKCYAN + f"Referer used : {referer}" 
+                + bcolors.ENDC)
 
-        create_html(
-            {"#3b8eea": f"Worker {position} | Referer used : {referer}"})
+            create_html({
+                "#3b8eea": f"Worker {position:4} | ",
+                "#23d18b": f"Referer used : {referer}"
+                })
 
-    else:
-        driver.get(url)
+        else:
+            driver.get(url)
+            
+    except Exception as e:
+        print(timestamp() 
+              + bcolors.FAIL + f"Worker {position:4} | set_referer() | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" 
+              + bcolors.ENDC)
+
+        create_html({
+            "#f14c4c": f"Worker {position:4} | set_referer() | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"
+            })
+    
 
 
 def youtube_normal(method, keyword, video_title, driver, output):
-    if method == 2:
+    if method == AccessMethod.SEARCH:
         msg = search_video(driver, keyword, video_title)
         if msg == 'failed':
-            raise Exception(
-                f"Can't find this [{video_title}] video with this keyword [{keyword}]")
+            raise Exception(f"Can't find this [{video_title}] video with this keyword [{keyword}]")
 
     skip_initial_ad(driver, output, duration_dict)
 
     try:
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-            (By.ID, 'movie_player')))
-    except WebDriverException:
-        raise Exception(
-            "Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube...")
+        WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.ID, 'movie_player')))
+    except WebDriverException as e:
+        raise Exception("Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube Video... || " + e.args[0] if e.args else '')
 
     features(driver)
 
     try:
-        view_stat = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '#count span'))).text
+        view_stat = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#count span'))).text
         if not view_stat:
             raise WebDriverException
     except WebDriverException:
-        view_stat = driver.find_element(
-            By.XPATH, '//*[@id="info"]/span[1]').text
+        view_stat = driver.find_element(By.XPATH, '//*[@id="info"]/span[1]').text
 
     return view_stat
 
+def youtube_short(position, method, keyword, video_title, driver, output):
+    view_stat = "short"
+    try:
+
+        if method == AccessMethod.SEARCH:
+            msg = search_video(driver, keyword, video_title)
+            if msg == 'failed':
+                raise Exception(f"Can't find this [{video_title}] video with this keyword [{keyword}]")
+
+        skip_initial_ad(driver, output, duration_dict)
+
+        try:
+            WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.ID, 'player')))
+        except WebDriverException as e:
+            raise Exception("Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube Short... || " + e.args[0] if e.args else '')
+
+        features(driver)
+
+        try:
+            view_stat = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '#like-button span'))).text
+            if not view_stat:
+                raise WebDriverException
+        except WebDriverException:
+            view_stat = driver.find_element(By.XPATH, '//*[@id="info"]/span[1]').text
+
+    except Exception as e:
+        print(timestamp() 
+              + bcolors.FAIL + f"Worker {position:4} | youtube_short() | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" 
+              + bcolors.ENDC)
+
+        create_html({
+            "#f14c4c": f"Worker {position:4} | youtube_short() | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"
+            })
+
+    return view_stat
 
 def youtube_music(driver):
     if 'coming-soon' in driver.title or 'not available' in driver.title:
-        raise Exception(
-            "YouTube Music is not available in your area!")
+        raise Exception("YouTube Music is not available in your area!")
     try:
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="player-page"]')))
-    except WebDriverException:
-        raise Exception(
-            "Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube...")
+        WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="player-page"]')))
+    except WebDriverException as e:
+        raise Exception("Slow internet speed or Stuck at reCAPTCHA! Can't load YouTube Music... || " + + e.args[0] if e.args else '')
 
     bypass_popup(driver)
 
     play_music(driver)
 
-    output = driver.find_element(
-        By.XPATH, '//ytmusic-player-bar//yt-formatted-string').text
+    output = driver.find_element(By.XPATH, '//miniplayer-bar//yt-formatted-string').text
     view_stat = 'music'
 
     return view_stat, output
@@ -368,10 +432,9 @@ def spoof_timezone_geolocation(proxy_type, proxy, driver):
     try:
         proxy_dict = {
             "http": f"{proxy_type}://{proxy}",
-                    "https": f"{proxy_type}://{proxy}",
+            "https": f"{proxy_type}://{proxy}",
         }
-        resp = requests.get(
-            "http://ip-api.com/json", proxies=proxy_dict, timeout=30)
+        resp = requests.get("http://ip-api.com/json", proxies=proxy_dict, timeout=30)
 
         if resp.status_code == 200:
             location = resp.json()
@@ -398,8 +461,7 @@ def spoof_timezone_geolocation(proxy_type, proxy, driver):
     try:
         driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
 
-        driver.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride", latlng_params)
+        driver.execute_cdp_cmd("Emulation.setGeolocationOverride", latlng_params)
 
     except WebDriverException:
         pass
@@ -409,22 +471,25 @@ def spoof_timezone_geolocation(proxy_type, proxy, driver):
 
 def control_player(driver, output, position, proxy, youtube, collect_id=True):
     current_url = driver.current_url
+    elementSelector = None
+
+    if youtube == YouTubeType.VIDEO:
+        elementSelector = "getElementById('movie_player')"
+    elif youtube == YouTubeType.SHORTS:
+        elementSelector = "getElementById('player').__dataHost.player"
 
     video_len = duration_dict.get(output, 0)
     for _ in range(90):
         if video_len != 0:
             duration_dict[output] = video_len
             break
-
-        video_len = driver.execute_script(
-            "return document.getElementById('movie_player').getDuration()")
+        video_len = driver.execute_script(f"return document.{elementSelector}.getDuration()")
         sleep(1)
 
     if video_len == 0:
         raise Exception('Video player is not loading...')
 
-    actual_duration = strftime(
-        "%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
+    actual_duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
     video_len = video_len*uniform(minimum, maximum)
     duration = strftime("%Hh:%Mm:%Ss", gmtime(video_len)).lstrip("0h:0m:")
 
@@ -432,27 +497,28 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
         output = driver.title[:-10]
 
     summary[position] = [position, output, f'{duration} / {actual_duration}']
-    website.summary_table = tabulate(
-        summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
+    website.summary_table = tabulate(summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
 
-    print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
-          f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} " + bcolors.ENDC)
+    print(timestamp() 
+          + bcolors.OKBLUE + f"Worker {position} | " 
+          + bcolors.OKGREEN + f"{proxy} --> {youtube} Found : {output} | Watch Duration : {duration} " 
+          + bcolors.ENDC)
 
-    create_html({"#3b8eea": f"Worker {position} | ",
-                 "#23d18b": f"{proxy.split('@')[-1]} --> {youtube} Found : {output} | Watch Duration : {duration} "})
+    create_html({
+        "#3b8eea": f"Worker {position} | ",
+        "#23d18b": f"{proxy.split('@')[-1]} --> {youtube} Found : {output} | Watch Duration : {duration} "
+        })
 
-    if youtube == 'Video' and collect_id:
+    if youtube == YouTubeType.VIDEO and collect_id:
         try:
-            video_id = re.search(
-                r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", current_url).group(1)
+            video_id = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", current_url).group(1)
             if video_id not in suggested and output in driver.title:
                 suggested.append(video_id)
         except Exception:
             pass
 
     try:
-        current_channel = driver.find_element(
-            By.CSS_SELECTOR, '#upload-info a').text
+        current_channel = driver.find_element(By.CSS_SELECTOR, '#upload-info a').text
     except WebDriverException:
         current_channel = 'Unknown'
 
@@ -460,17 +526,18 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
     loop = int(video_len/4)
     for _ in range(loop):
         sleep(5)
-        current_time = driver.execute_script(
-            "return document.getElementById('movie_player').getCurrentTime()")
+        current_time = driver.execute_script(f"return document.{elementSelector}.getCurrentTime()")
 
-        if youtube == 'Video':
+        if youtube == YouTubeType.VIDEO:
             play_video(driver)
             random_command(driver)
-        elif youtube == 'Music':
+        elif youtube == YouTubeType.SHORTS:
+            play_video(driver)
+            random_command(driver)
+        elif youtube == YouTubeType.MUSIC:
             play_music(driver)
 
-        current_state = driver.execute_script(
-            "return document.getElementById('movie_player').getPlayerState()")
+        current_state = driver.execute_script(f"return document.{elementSelector}.getPlayerState()")
         if current_state in [-1, 3]:
             error += 1
         else:
@@ -486,13 +553,11 @@ def control_player(driver, output, position, proxy, youtube, collect_id=True):
             break
 
     summary.pop(position, None)
-    website.summary_table = tabulate(
-        summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
+    website.summary_table = tabulate(summary.values(), headers=headers_1, numalign='center', stralign='center', tablefmt="html")
 
     output = textwrap.fill(text=output, width=75, break_on_hyphens=False)
     video_statistics[output] = video_statistics.get(output, 0) + 1
-    website.html_table = tabulate(video_statistics.items(), headers=headers_2,
-                                  showindex=True, numalign='center', stralign='center', tablefmt="html")
+    website.html_table = tabulate(video_statistics.items(), headers=headers_2, showindex=True, numalign='center', stralign='center', tablefmt="html")
 
     return current_url, current_channel
 
@@ -506,14 +571,19 @@ def youtube_live(proxy, position, driver, output):
             if not view_stat:
                 raise WebDriverException
         except WebDriverException:
-            view_stat = driver.find_element(
-                By.XPATH, '//*[@id="info"]/span[1]').text
+            view_stat = driver.find_element(By.XPATH, '//*[@id="info"]/span[1]').text
         if 'watching' in view_stat:
-            print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
-                  f"{proxy} | {output} | " + bcolors.OKCYAN + f"{view_stat} " + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position} | " 
+                  + bcolors.OKGREEN + f"{proxy} | {output} | " 
+                  + bcolors.OKCYAN + f"{view_stat} " 
+                  + bcolors.ENDC)
 
-            create_html({"#3b8eea": f"Worker {position} | ",
-                         "#23d18b": f"{proxy.split('@')[-1]} | {output} | ", "#29b2d3": f"{view_stat} "})
+            create_html({
+                "#3b8eea": f"Worker {position} | ",
+                "#23d18b": f"{proxy.split('@')[-1]} | {output} | ", 
+                "#29b2d3": f"{view_stat} "
+                })
         else:
             error += 1
 
@@ -528,43 +598,44 @@ def youtube_live(proxy, position, driver, output):
     update_view_count(position)
 
 
-def music_and_video(proxy, position, youtube, driver, output, view_stat):
+def music_and_video(proxy, position, youtube, driver, output):
     rand_choice = 1
-    if len(suggested) > 1 and view_stat != 'music':
+    if len(suggested) > 1 and youtube == YouTubeType.VIDEO:
         rand_choice = randint(1, 3)
 
     for i in range(rand_choice):
         if i == 0:
-            current_url, current_channel = control_player(
-                driver, output, position, proxy, youtube, collect_id=True)
+            current_url, current_channel = control_player(driver, output, position, proxy, youtube, collect_id=True)
 
             update_view_count(position)
 
         else:
-            print(timestamp() + bcolors.OKBLUE +
-                  f"Worker {position} | Suggested video loop : {i}" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position} | Suggested video loop : {i}" 
+                  + bcolors.ENDC)
 
-            create_html(
-                {"#3b8eea": f"Worker {position} | Suggested video loop : {i}"})
+            create_html({
+                "#3b8eea": f"Worker {position} | Suggested video loop : {i}"
+                })
 
             try:
                 output = play_next_video(driver, suggested)
             except WebDriverException as e:
-                raise Exception(
-                    f"Error suggested | {type(e).__name__} | {e.args[0] if e.args else ''}")
+                raise Exception(f"Error suggested | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
-            print(timestamp() + bcolors.OKBLUE +
-                  f"Worker {position} | Found next suggested video : [{output}]" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position} | Found next suggested video : [{output}]" 
+                  + bcolors.ENDC)
 
-            create_html(
-                {"#3b8eea": f"Worker {position} | Found next suggested video : [{output}]"})
+            create_html({
+                "#3b8eea": f"Worker {position} | Found next suggested video : [{output}]"
+                })
 
             skip_initial_ad(driver, output, duration_dict)
 
             features(driver)
 
-            current_url, current_channel = control_player(
-                driver, output, position, proxy, youtube, collect_id=False)
+            current_url, current_channel = control_player(driver, output, position, proxy, youtube, collect_id=False)
 
             update_view_count(position)
 
@@ -581,34 +652,36 @@ def channel_or_endscreen(proxy, position, youtube, driver, view_stat, current_ur
                 output, log, option = play_from_channel(
                     driver, current_channel)
             except WebDriverException as e:
-                raise Exception(
-                    f"Error channel | {type(e).__name__} | {e.args[0] if e.args else ''}")
+                raise Exception(f"Error channel | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
-            print(timestamp() + bcolors.OKBLUE +
-                  f"Worker {position} | {log}" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position} | {log}" 
+                  + bcolors.ENDC)
 
-            create_html({"#3b8eea": f"Worker {position} | {log}"})
+            create_html({
+                "#3b8eea": f"Worker {position} | {log}"
+                })
 
         elif option == 3:
             try:
                 output = play_end_screen_video(driver)
             except WebDriverException as e:
-                raise Exception(
-                    f"Error end screen | {type(e).__name__} | {e.args[0] if e.args else ''}")
+                raise Exception(f"Error end screen | {type(e).__name__} | {e.args[0] if e.args else ''}")
 
-            print(timestamp() + bcolors.OKBLUE +
-                  f"Worker {position} | Video played from end screen : [{output}]" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position} | Video played from end screen : [{output}]" 
+                  + bcolors.ENDC)
 
-            create_html(
-                {"#3b8eea": f"Worker {position} | Video played from end screen : [{output}]"})
+            create_html({
+                "#3b8eea": f"Worker {position} | Video played from end screen : [{output}]"
+                })
 
         if option in [2, 3]:
             skip_initial_ad(driver, output, duration_dict)
 
             features(driver)
 
-            current_url, current_channel = control_player(
-                driver, output, position, proxy, youtube, collect_id=False)
+            current_url, current_channel = control_player(driver, output, position, proxy, youtube, collect_id=False)
 
         if option in [2, 3, 4]:
             update_view_count(position)
@@ -660,8 +733,6 @@ def main_viewer(proxy_type, proxy, position):
         ).generate()
         agent = header['User-Agent']
 
-        url, method, youtube, keyword, video_title = direct_or_search(position)
-
         if category == 'r' and proxy_api:
             for _ in range(20):
                 proxy = choice(proxies_from_api)
@@ -669,32 +740,44 @@ def main_viewer(proxy_type, proxy, position):
                     break
             used_proxies.append(proxy)
 
-        status = check_proxy(category, agent, proxy, proxy_type)
+        check_proxy(category, agent, proxy, proxy_type)
+        
+        url, method, youtube, keyword, video_title = direct_or_search(position)
 
-        if status != 200:
-            raise RequestException(status)
+        try:        
 
-        try:
-            print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
-                  f"{proxy} | {proxy_type.upper()} | Good Proxy | Opening a new driver..." + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position:4} | " 
+                  + bcolors.OKGREEN + f"{proxy:22} | {proxy_type.upper()} | Good Proxy | Opening a new driver..." 
+                  + bcolors.ENDC)
 
-            create_html({"#3b8eea": f"Worker {position} | ",
-                        "#23d18b": f"{proxy.split('@')[-1]} | {proxy_type.upper()} | Good Proxy | Opening a new driver..."})
+            create_html({
+                "#3b8eea": f"Worker {position:4} | ",
+                "#23d18b": f"{proxy.split('@')[-1]:22} | {proxy_type.upper()} | Good Proxy | Opening a new driver..."
+                })
+            
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position:4} | " 
+                  + bcolors.OKCYAN + f"Method = {method}; Type = {youtube}" 
+                  + bcolors.ENDC)
 
+            create_html({
+                "#3b8eea": f"Worker {position:4} | ",
+                "#23d18b": f"Method = {method}; Type = {youtube}"
+                })
+            
             while proxy in bad_proxies:
                 bad_proxies.remove(proxy)
-                sleep(1)
+                sleep(1)               
 
-            patched_driver = os.path.join(
-                patched_drivers, f'chromedriver_{position%threads}{exe_name}')
+            patched_driver = os.path.join(patched_drivers, f'chromedriver_{position%threads}{exe_name}')
 
             try:
                 Patcher(executable_path=patched_driver).patch_exe()
             except Exception:
                 pass
 
-            proxy_folder = os.path.join(
-                cwd, 'extension', f'proxy_auth_{position}')
+            proxy_folder = os.path.join(cwd, 'extension', f'proxy_auth_{position}')
 
             factor = int(threads/(0.1*threads + 1))
             sleep_time = int((str(position)[-1])) * factor
@@ -702,8 +785,7 @@ def main_viewer(proxy_type, proxy, position):
             if cancel_all:
                 raise KeyboardInterrupt
 
-            driver = get_driver(background, viewports, agent, auth_required,
-                                patched_driver, proxy, proxy_type, proxy_folder)
+            driver = get_driver(background, viewports, agent, auth_required, patched_driver, proxy, proxy_type, proxy_folder)
 
             driver_dict[driver] = proxy_folder
 
@@ -712,15 +794,19 @@ def main_viewer(proxy_type, proxy, position):
 
             sleep(2)
 
-            info = spoof_timezone_geolocation(proxy_type, proxy, driver)
+            tz_info = spoof_timezone_geolocation(proxy_type, proxy, driver)
 
             isdetected = driver.execute_script('return navigator.webdriver')
 
-            print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " + bcolors.OKGREEN +
-                  f"{proxy} | {proxy_type.upper()} | " + bcolors.OKCYAN + f"{info} | Detected? : {isdetected}" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.OKBLUE + f"Worker {position:4} | " 
+                  + bcolors.OKCYAN + f"{tz_info} | Detected? : {isdetected}" 
+                  + bcolors.ENDC)
 
-            create_html({"#3b8eea": f"Worker {position} | ",
-                        "#23d18b": f"{proxy.split('@')[-1]} | {proxy_type.upper()} | ", "#29b2d3": f"{info} | Detected? : {isdetected}"})
+            create_html({
+                "#3b8eea": f"Worker {position:4} | ",
+                "#29b2d3": f"{tz_info} | Detected? : {isdetected}"
+                })
 
             if width == 0:
                 width = driver.execute_script('return screen.width')
@@ -731,11 +817,13 @@ def main_viewer(proxy_type, proxy, position):
             set_referer(position, url, method, driver)
 
             if 'consent' in driver.current_url:
-                print(timestamp() + bcolors.OKBLUE +
-                      f"Worker {position} | Bypassing consent..." + bcolors.ENDC)
+                print(timestamp() 
+                      + bcolors.OKCYAN + f"Worker {position:4} | Bypassing consent..." 
+                      + bcolors.ENDC)
 
-                create_html(
-                    {"#3b8eea": f"Worker {position} | Bypassing consent..."})
+                create_html({
+                    "#29b2d3": f"Worker {position:4} | Bypassing consent..."
+                    })
 
                 bypass_consent(driver)
 
@@ -744,21 +832,23 @@ def main_viewer(proxy_type, proxy, position):
             else:
                 output = driver.title[:-10]
 
-            if youtube == 'Video':
-                view_stat = youtube_normal(
-                    method, keyword, video_title, driver, output)
-            else:
+            if youtube == YouTubeType.VIDEO:
+                view_stat = youtube_normal(method, keyword, video_title, driver, output)
+            elif youtube == YouTubeType.SHORTS:
+                view_stat = youtube_short(position, method, keyword, video_title, driver, output)
+            elif youtube == YouTubeType.MUSIC:
                 view_stat, output = youtube_music(driver)
+            else:
+                raise Exception('Invalid YouTube type')
 
             if 'watching' in view_stat:
+                youtube = YouTubeType.LIVE
                 youtube_live(proxy, position, driver, output)
 
             else:
-                current_url, current_channel = music_and_video(
-                    proxy, position, youtube, driver, output, view_stat)
+                current_url, current_channel = music_and_video(proxy, position, youtube, driver, output)
 
-            channel_or_endscreen(proxy, position, youtube,
-                                 driver, view_stat, current_url, current_channel)
+            channel_or_endscreen(proxy, position, youtube,driver, view_stat, current_url, current_channel)
 
             if randint(1, 2) == 1:
                 try:
@@ -771,28 +861,40 @@ def main_viewer(proxy_type, proxy, position):
         except Exception as e:
             status = quit_driver(driver=driver, data_dir=data_dir)
 
-            print(timestamp() + bcolors.FAIL +
-                  f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
+            print(timestamp() 
+                  + bcolors.FAIL + f"Worker {position:4} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" 
+                  + bcolors.ENDC)
 
-            create_html(
-                {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
+            create_html({
+                "#f14c4c": f"Worker {position:4} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"
+                })
 
-    except RequestException:
-        print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " +
-              bcolors.FAIL + f"{proxy} | {proxy_type.upper()} | Bad proxy " + bcolors.ENDC)
+    except requests.exceptions.RequestException as e:
+        error_cause = e.__class__.__name__
+        if e.__cause__ is not None:
+            error_cause = e.__cause__
 
-        create_html({"#3b8eea": f"Worker {position} | ",
-                     "#f14c4c": f"{proxy.split('@')[-1]} | {proxy_type.upper()} | Bad proxy "})
+        print(timestamp() 
+              + bcolors.OKBLUE + f"Worker {position:4} | " 
+              + bcolors.FAIL + f"{proxy:22} | {proxy_type.upper()} | Bad proxy " + "| Error: " + error_cause 
+              + bcolors.ENDC)
+
+        create_html({
+            "#3b8eea": f"Worker {position:4} | ",
+            "#f14c4c": f"{proxy.split('@')[-1]:22} | {proxy_type.upper()} | Bad proxy " + "| Error: " + error_cause
+            })
 
         checked[position] = proxy_type
         bad_proxies.append(proxy)
 
     except Exception as e:
-        print(timestamp() + bcolors.FAIL +
-              f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
+        print(timestamp() 
+              + bcolors.FAIL + f"Worker {position:4} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" 
+              + bcolors.ENDC)
 
-        create_html(
-            {"#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
+        create_html({
+            "#f14c4c": f"Worker {position:4} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"
+            })
 
 
 def get_proxy_list():
@@ -832,8 +934,7 @@ def stop_server(immediate=False):
 
 
 def clean_exit():
-    print(timestamp() + bcolors.WARNING +
-          'Cleaning up processes...' + bcolors.ENDC)
+    print(timestamp() + bcolors.WARNING + 'Cleaning up processes...' + bcolors.ENDC)
     create_html({"#f3f342": "Cleaning up processes..."})
 
     if osname == 'win':
@@ -897,8 +998,7 @@ def main():
 
     proxy_list = get_proxy_list()
     if category != 'r':
-        print(bcolors.OKCYAN +
-              f'Total proxies : {len(proxy_list)}' + bcolors.ENDC)
+        print(bcolors.OKCYAN + f'Total proxies : {len(proxy_list)}' + bcolors.ENDC)
 
     proxy_list = [x for x in proxy_list if x not in bad_proxies]
     if len(proxy_list) == 0:
@@ -944,20 +1044,16 @@ def main():
                     proxies_from_api = scrape_api(link=filename)
 
                 if len(view) >= views:
-                    print(timestamp() + bcolors.WARNING +
-                          f'Amount of views added : {views} | Stopping program...' + bcolors.ENDC)
-                    create_html(
-                        {"#f3f342": f'Amount of views added : {views} | Stopping program...'})
+                    print(timestamp() + bcolors.WARNING + f'Amount of views added : {views} | Stopping program...' + bcolors.ENDC)
+                    create_html({"#f3f342": f'Amount of views added : {views} | Stopping program...'})
 
                     cancel_pending_task(not_done=not_done)
                     break
 
                 elif hash_config != get_hash(config_path):
                     hash_config = get_hash(config_path)
-                    print(timestamp() + bcolors.WARNING +
-                          'Modified config.json will be in effect soon...' + bcolors.ENDC)
-                    create_html(
-                        {"#f3f342": 'Modified config.json will be in effect soon...'})
+                    print(timestamp() + bcolors.WARNING + 'Modified config.json will be in effect soon...' + bcolors.ENDC)
+                    create_html({"#f3f342": 'Modified config.json will be in effect soon...'})
 
                     cancel_pending_task(not_done=not_done)
                     break
@@ -975,19 +1071,15 @@ def main():
                             x for x in proxy_list[1:-1] if x not in bad_proxies]
 
                         if sorted(proxy_list_new) != sorted(proxy_list_old):
-                            print(timestamp() + bcolors.WARNING +
-                                  f'Refresh {refresh} minute triggered. Proxies will be reloaded soon...' + bcolors.ENDC)
-                            create_html(
-                                {"#f3f342": f'Refresh {refresh} minute triggered. Proxies will be reloaded soon...'})
+                            print(timestamp() + bcolors.WARNING + f'Refresh {refresh} minute triggered. Proxies will be reloaded soon...' + bcolors.ENDC)
+                            create_html({"#f3f342": f'Refresh {refresh} minute triggered. Proxies will be reloaded soon...'})
 
                             cancel_pending_task(not_done=not_done)
                             break
 
         except KeyboardInterrupt:
-            print(timestamp() + bcolors.WARNING +
-                  'Hold on!!! Allow me a moment to close all the running drivers.' + bcolors.ENDC)
-            create_html(
-                {"#f3f342": 'Hold on!!! Allow me a moment to close all the running drivers.'})
+            print(timestamp() + bcolors.WARNING + 'Hold on!!! Allow me a moment to close all the running drivers.' + bcolors.ENDC)
+            create_html({"#f3f342": 'Hold on!!! Allow me a moment to close all the running drivers.'})
 
             cancel_pending_task(not_done=not_done)
             raise KeyboardInterrupt
@@ -1022,8 +1114,7 @@ if __name__ == '__main__':
             try:
                 i = 0
                 while i < 96:
-                    print(bcolors.OKBLUE + f"{start - time():.0f} seconds remaining " +
-                          animation[i % len(animation)] + bcolors.ENDC, end="\r")
+                    print(bcolors.OKBLUE + f"{start - time():.0f} seconds remaining " + animation[i % len(animation)] + bcolors.ENDC, end="\r")
                     i += 1
                     sleep(0.2)
                 print('\n')
@@ -1072,10 +1163,8 @@ if __name__ == '__main__':
                 max_threads = min_threads
 
             if auth_required and background:
-                print(bcolors.FAIL +
-                      "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
-                input(bcolors.WARNING +
-                      f"Either use proxy without username & password or disable headless mode " + bcolors.ENDC)
+                print(bcolors.FAIL + "Premium proxy needs extension to work. Chrome doesn't support extension in Headless mode." + bcolors.ENDC)
+                input(bcolors.WARNING + f"Either use proxy without username & password or disable headless mode " + bcolors.ENDC)
                 sys.exit()
 
             copy_drivers(cwd=cwd, patched_drivers=patched_drivers,
