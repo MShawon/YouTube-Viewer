@@ -23,6 +23,9 @@
 # YouTube Viewer
 Simple program to increase YouTube views written in Python. Works with live stream too.
 
+# NOTICE
+**Not working anymore. If I can fix it there will be a new release. Until then don't use it.**
+
 **Disclaimer:** This has been developed for educational purposes only. Any action you take using this script is strictly at your own risk. I will not be liable for any losses or damages you face using this script.
 
 **Cons:** There will be some view drop always. 
