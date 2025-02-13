@@ -1,6 +1,1 @@
-keyword 1 :::: exact video title 1
-keyword 2 :::: exact video title 2
-keyword 3 :::: exact video title 2
-keyword 1 :::: video_id 1
-keyword 2 :::: video_id 2
-keyword 4 :::: exact video title 3
+Separate Ways :::: Daughtry - Separate Ways (Worlds Apart) (Official Music Video) ft. Lzzy Hale ft. Lzzy Hale

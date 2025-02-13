@@ -23,12 +23,9 @@
 # YouTube Viewer
 Simple program to increase YouTube views written in Python. Works with live stream too.
 
-# NOTICE
-**Not working anymore. If I can fix it there will be a new release. Until then don't use it.**
-
 **Disclaimer:** This has been developed for educational purposes only. Any action you take using this script is strictly at your own risk. I will not be liable for any losses or damages you face using this script.
 
-**Cons:** There will be some view drop always. 
+**Cons:** There will ALWAYS be view drops. 
 
 # Support
    Consider a donation to keep this project alive and for the countless hours of works and testing :)
@@ -66,7 +63,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 
 # Requirements
- * **Python 3.7.x-3.11.x**
+ * **Python 3.7.x-3.12.x**
  * High speed Internet Connection
  * Good proxy list (http, https, socks4, socks5)
  * Google Chrome installed on your OS (not Chromium)
@@ -75,29 +72,34 @@ Simple program to increase YouTube views written in Python. Works with live stre
 # Features
  * YouTube default, live streaming and YouTube Music support
  * Multithreaded and Dynamic thread support
- * Auto download updated chrome driver whenever user's Google Chrome version is updated
- * Patch chrome driver on the start of every thread by undetected-chromedriver
+ * Auto download updated chrome driver using undetected-chromedriver
  * Proxy support 
-      * location : text file (must be on path) / proxy API (should work with most of the proxy providers)
+      * location : text file (must be on path) / proxy API (works with most proxy providers)
       * type : http, https, socks4, socks5
       * format : `ip:port`, `user:pass@ip:port`, `ip:port:user:pass`
-      * proxy refresh after a certain time specified by the user
+      * proxy refresh after a specified time interval
       * rotating proxy support
- * chrome v80+ randomized user agent based on platform
- * canvas,audio,font,webgl fingerprint defender and IP leak prevent by webrtc control
- * geolocation, timezone, referer spoofing
- * can add extra extensions in the `extension/custom_extension/` folder
- * direct link or search *keyword* on YouTube then watch the video by matching exact video *title*
- * modify **urls.txt, search.txt and config.json** on the fly without restarting program
- * HTTP api on localhost and a database to store view count
- * config.json to save settings
- * bypass consent page and several other pop up 
- * save bandwidth by reducing video quality 
- * can set higher(100%) watch duration percentage to increase *Watch time*, change playback speed
+ * Modern Chrome compatibility with randomized user agent
+ * Basic browser fingerprint protection:
+      * WebRTC leak prevention
+      * Timezone and referer spoofing
+ * Custom extension support via `extension/custom_extension/` folder
+ * Flexible video targeting:
+      * Direct video URLs
+      * Search-based targeting with title matching
+      * Real-time config updates without restart
+ * Monitoring and Management:
+      * HTTP API for status monitoring
+      * SQLite database for view tracking
+      * Configurable settings via config.json
+ * YouTube Interaction Features:
+      * Consent popup handling
+      * Bandwidth optimization via quality control
+      * Configurable watch duration and playback speed
  * #### Traffic Sources
    * YouTube Search
    * Suggested Videos
-   * External (Google, Yahoo, DuckDuckGo, Bing, Twitter)
+   * External Sources (Google, DuckDuckGo, Bing)
    * End Screens
    * Channel Pages
    * Direct or unknown
@@ -174,7 +176,7 @@ Simple program to increase YouTube views written in Python. Works with live stre
   
 * ## Installation
 
-  First, make sure you have installed git and Python version between 3.7.x to 3.11.x
+  First, make sure you have installed git and Python version between 3.7.x to 3.12.x
   
   Open command prompt and type
   ```
@@ -185,9 +187,6 @@ Simple program to increase YouTube views written in Python. Works with live stre
   ```
   ```
   python -m pip install --upgrade pip wheel
-  ```
-  ```
-  pip install "setuptools<59"
   ```
   ```
   pip install -r requirements.txt
@@ -262,4 +261,10 @@ Simple program to increase YouTube views written in Python. Works with live stre
 
 
 # Credits
- I want to thank all of you who have opened an issue or shared your code snippets or ideas with me! 
+I want to thank all of you who have opened an issue or shared your code snippets or ideas with me!
+
+Currently maintained by:
+- Original author: MShawon
+- Current maintainer: Leaske
+
+Feel free to contribute by opening issues or submitting pull requests!

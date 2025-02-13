@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
 import calendar
 import sqlite3
 import warnings
@@ -28,134 +29,170 @@ from contextlib import closing
 from datetime import date, datetime, timedelta
 
 from flask import Flask, jsonify, render_template, request
+from werkzeug.serving import run_simple
 
 warnings.filterwarnings("ignore", category=Warning)
 
-MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December']
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 
 console = []
-summary_table = ''
-html_table = ''
-database = 'database.db'
+summary_table = ""
+html_table = ""
+database = "database.db"
 
 
 def create_graph_data(dropdown_text):
+    """Generate graph data based on dropdown selection."""
     now = datetime.now()
-    day = now.day
-    month = now.month
-    year = now.year
     today = now.date()
-    days = False
-    try:
-        number = [int(s) for s in dropdown_text.split() if s.isdigit()][0]
-    except Exception:
-        number = False
-
-    if number:
-        if dropdown_text.startswith('Last'):
-            days = number
-        else:
-            month = MONTHS.index(dropdown_text[:-5]) + 1
-            year = number
-    else:
-        month = MONTHS.index(dropdown_text) + 1
-
     query_days = []
 
+    try:
+        days = (
+            int([int(s) for s in dropdown_text.split() if s.isdigit()][0])
+            if "Last" in dropdown_text
+            else None
+        )
+    except (ValueError, IndexError):
+        days = None
+
     if days:
-        for i in range(days):
-            day = today - timedelta(days=i)
-            query_days.append(str(day))
+        query_days = [(today - timedelta(days=i)).isoformat() for i in range(days)]
         query_days.reverse()
-
     else:
-        num_days = calendar.monthrange(year, month)[1]
-        for day in range(1, num_days+1):
-            query_days.append(str(date(year, month, day)))
+        try:
+            if " " in dropdown_text:
+                month, year = dropdown_text.rsplit(" ", 1)
+                month = MONTHS.index(month) + 1
+                year = int(year)
+            else:
+                month = MONTHS.index(dropdown_text) + 1
+                year = now.year
+            num_days = calendar.monthrange(year, month)[1]
+            query_days = [
+                date(year, month, day).isoformat() for day in range(1, num_days + 1)
+            ]
+        except Exception as e:
+            print(f"Error parsing dropdown text '{dropdown_text}': {e}")
+            return [], 0, None, None
 
-    first_date = query_days[0]
-    last_date = query_days[-1]
-
-    graph_data = [['Date', 'Views']]
-    total = 0
+    graph_data = [["Date", "Views"]]
+    total_views = 0
 
     try:
         with closing(sqlite3.connect(database, timeout=30)) as connection:
             with closing(connection.cursor()) as cursor:
-                for i in query_days:
-                    view = cursor.execute(
-                        "SELECT view FROM statistics WHERE date = ?", (i,),).fetchall()
-                    if view:
-                        graph_data.append([i[-2:], view[0][0]])
-                        total += view[0][0]
-                    else:
-                        graph_data.append([i[-2:], 0])
-    except Exception:
-        pass
+                for query_date in query_days:
+                    result = cursor.execute(
+                        "SELECT view FROM statistics WHERE date = ?", (query_date,)
+                    ).fetchone()
+                    views = result[0] if result else 0
+                    graph_data.append([query_date[-2:], views])
+                    total_views += views
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
 
-    return graph_data, total, first_date, last_date
+    return graph_data, total_views, query_days[0], query_days[-1]
 
 
 def create_dropdown_data():
-    dropdown = ['Last 7 days', 'Last 28 days', 'Last 90 days']
+    """Create dropdown data for the UI."""
+    dropdown = ["Last 7 days", "Last 28 days", "Last 90 days"]
     now = datetime.now()
     current_year = now.year
+
     dropdown.append(now.strftime("%B"))
 
-    for _ in range(0, 12):
+    for _ in range(12):
         now = now.replace(day=1) - timedelta(days=1)
-        if current_year == now.year:
-            dropdown.append(now.strftime("%B"))
-        else:
-            dropdown.append(now.strftime("%B %Y"))
+        dropdown.append(
+            now.strftime("%B %Y") if now.year < current_year else now.strftime("%B")
+        )
 
     return dropdown
 
 
 def shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
+    """Shut down the Flask server."""
+    try:
+        func = request.environ.get("werkzeug.server.shutdown")
+        if func is None:
+            # For newer versions of Werkzeug
+            raise RuntimeError("Not running with Werkzeug Server")
+        func()
+    except Exception as e:
+        print(f"Error shutting down server: {e}")
 
 
 def start_server(host, port, debug=False):
-    app = Flask(__name__,
-                static_url_path='',
-                static_folder='web/static',
-                template_folder='web/templates')
+    """Start the Flask server."""
+    app = Flask(
+        __name__,
+        static_url_path="",
+        static_folder="web/static",
+        template_folder="web/templates",
+    )
 
-    @app.route('/')
+    @app.route("/")
     def home():
         dropdown = create_dropdown_data()
-        return render_template('homepage.html', dropdownitems=dropdown)
+        return render_template("homepage.html", dropdownitems=dropdown)
 
-    @app.route('/update', methods=['POST'])
+    @app.route("/update", methods=["POST"])
     def update():
-        return jsonify({'result': 'success', 'console': console[:200], 'summary': summary_table[8:-9], 'table': html_table[8:-9]})
+        return jsonify(
+            {
+                "result": "success",
+                "console": console[:200],
+                "summary": summary_table[8:-9],
+                "table": html_table[8:-9],
+            }
+        )
 
-    @app.route('/graph', methods=['GET', 'POST'])
+    @app.route("/graph", methods=["GET", "POST"])
     def graph():
-        query = None
-        if request.method == 'POST':
-            query = request.json['query']
-            graph_data, total, first_date, last_date = create_graph_data(query)
+        if request.method == "POST":
+            try:
+                query = request.json.get("query")
+                graph_data, total, first_date, last_date = create_graph_data(query)
+                return jsonify(
+                    {
+                        "graph_data": graph_data,
+                        "total": total,
+                        "first": first_date,
+                        "last": last_date,
+                    }
+                )
+            except Exception as e:
+                return jsonify({"error": f"Failed to generate graph: {e}"}), 500
+        return jsonify({"error": "Invalid request method"}), 405
 
-            return jsonify({
-                'graph_data': graph_data,
-                'total': total,
-                'first': first_date,
-                'last': last_date
-            })
-
-    @app.route('/shutdown', methods=['POST'])
+    @app.route("/shutdown", methods=["POST"])
     def shutdown():
-        shutdown_server()
-        return 'Server shutting down...'
+        try:
+            shutdown_server()
+            return "Server shutting down..."
+        except RuntimeError as e:
+            return jsonify({"error": str(e)}), 500
 
-    app.run(host=host, port=port, debug=debug)
+    if debug:
+        app.run(host=host, port=port, debug=debug)
+    else:
+        run_simple(host, port, app, threaded=True)
 
 
-if __name__ == '__main__':
-    start_server(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    start_server(host="0.0.0.0", port=5000, debug=True)
