@@ -94,49 +94,148 @@ chrome.webRequest.onAuthRequired.addListener(
 
 
 def get_driver(background, viewports, agent, auth_required, path, proxy, proxy_type, proxy_folder):
-    options = webdriver.ChromeOptions()
-    options.headless = background
+    import undetected_chromedriver as uc
+    
+    # Use undetected-chromedriver options
+    options = uc.ChromeOptions()
+    
+    # Basic stealth settings
     if viewports:
         options.add_argument(f"--window-size={choice(viewports)}")
     options.add_argument("--log-level=3")
-    options.add_experimental_option(
-        "excludeSwitches", ["enable-automation", "enable-logging"])
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    
+    # Remove problematic excludeSwitches - this causes the error in newer Chrome
+    # options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
-    prefs = {"intl.accept_languages": 'en_US,en',
-             "credentials_enable_service": False,
-             "profile.password_manager_enabled": False,
-             "profile.default_content_setting_values.notifications": 2,
-             "download_restrictions": 3}
+    
+    # User preferences
+    prefs = {
+        "intl.accept_languages": 'en_US,en',
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+        "profile.default_content_setting_values.notifications": 2,
+        "download_restrictions": 3,
+        "profile.default_content_settings.popups": 0
+    }
     options.add_experimental_option("prefs", prefs)
     options.add_experimental_option('extensionLoadTimeout', 120000)
-    options.add_argument(f"user-agent={agent}")
+    
+    # Additional stealth arguments
+    options.add_argument(f"--user-agent={agent}")
     options.add_argument("--mute-audio")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-features=UserAgentClientHint')
     options.add_argument("--disable-web-security")
-    webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
-        'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
+    options.add_argument("--disable-features=VizDisplayCompositor")
+    options.add_argument("--disable-automation")  # Alternative to excludeSwitches
+    
+    # Set headless mode if needed
+    if background:
+        options.add_argument("--headless=new")
+    else:
+        # Add extensions only in non-headless mode
+        try:
+            options.add_extension(WEBRTC)
+            options.add_extension(FINGERPRINT)
+            options.add_extension(ACTIVE)
 
-    if not background:
-        options.add_extension(WEBRTC)
-        options.add_extension(FINGERPRINT)
-        options.add_extension(ACTIVE)
+            if CUSTOM_EXTENSIONS:
+                for extension in CUSTOM_EXTENSIONS:
+                    options.add_extension(extension)
+        except Exception as e:
+            print(f"Warning: Could not load extensions: {e}")
 
-        if CUSTOM_EXTENSIONS:
-            for extension in CUSTOM_EXTENSIONS:
-                options.add_extension(extension)
-
+    # Proxy configuration
     if auth_required:
         create_proxy_folder(proxy, proxy_folder)
         options.add_argument(f"--load-extension={proxy_folder}")
     else:
         options.add_argument(f'--proxy-server={proxy_type}://{proxy}')
 
-    service = Service(executable_path=path)
-    driver = webdriver.Chrome(service=service, options=options)
+    try:
+        # Use undetected-chromedriver directly
+        major_version = int(get_chrome_version().split('.')[0])
+        driver = uc.Chrome(
+            options=options,
+            driver_executable_path=path if os.path.exists(path) else None,
+            version_main=major_version,
+            headless=background
+        )
+        
+        # Additional stealth measures
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+            "userAgent": agent,
+            "acceptLanguage": "en-US,en;q=0.9",
+            "platform": "Win32"
+        })
+        
+        return driver
+        
+    except Exception as e:
+        print(f"Error creating undetected Chrome driver: {e}")
+        # Fallback to regular selenium with simpler options
+        try:
+            from selenium.webdriver.chrome.service import Service
+            regular_options = webdriver.ChromeOptions()
+            regular_options.add_argument("--log-level=3")
+            regular_options.add_argument(f"--user-agent={agent}")
+            regular_options.add_argument("--disable-automation")
+            regular_options.add_argument("--no-sandbox")
+            regular_options.add_argument("--disable-dev-shm-usage")
+            
+            if background:
+                regular_options.add_argument("--headless=new")
+            if not auth_required:
+                regular_options.add_argument(f'--proxy-server={proxy_type}://{proxy}')
+            
+            service = Service(executable_path=path)
+            driver = webdriver.Chrome(service=service, options=regular_options)
+            return driver
+        except Exception as e2:
+            print(f"Fallback also failed: {e2}")
+            # Last resort: try with regular ChromeOptions
+            try:
+                from selenium.webdriver.chrome.service import Service
+                minimal_options = webdriver.ChromeOptions()
+                minimal_options.add_argument("--log-level=3")
+                minimal_options.add_argument("--no-sandbox")
+                if background:
+                    minimal_options.add_argument("--headless=new")
+                
+                service = Service(executable_path=path)
+                driver = webdriver.Chrome(service=service, options=minimal_options)
+                return driver
+            except Exception as e3:
+                print(f"All driver creation methods failed: {e3}")
+                raise e3
 
-    return driver
+
+def get_chrome_version():
+    """Helper function to get Chrome version"""
+    import platform
+    import subprocess
+    
+    try:
+        osname = platform.system()
+        if osname == 'Darwin':
+            process = subprocess.Popen(
+                ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version'], 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            version = process.communicate()[0].decode('UTF-8').replace('Google Chrome', '').strip()
+            return version
+        elif osname == 'Linux':
+            process = subprocess.Popen(['google-chrome-stable', '--version'], 
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            version = process.communicate()[0].decode('utf-8').replace('Google Chrome', '').strip()
+            return version
+        else:
+            # Default for Windows or unknown OS
+            return "138.0.6464.175"
+    except Exception:
+        return "138.0.6464.175"
 
 
 def play_video(driver):
@@ -201,6 +300,7 @@ def type_keyword(driver, keyword, retry=False):
 
 def scroll_search(driver, video_title):
     msg = None
+    i = 0
     for i in range(1, 11):
         try:
             section = WebDriverWait(driver, 60).until(EC.visibility_of_element_located(
