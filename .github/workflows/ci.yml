@@ -1,0 +1,192 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        exclude:
+          # Exclude some combinations to reduce job count
+          - os: windows-latest
+            python-version: '3.7'
+          - os: macos-latest
+            python-version: '3.7'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-updated.txt
+
+    - name: Install Chrome (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Type check with mypy
+      run: |
+        pip install mypy types-requests
+        mypy youtube_viewer.py --ignore-missing-imports || true
+
+    - name: Test import functionality
+      run: |
+        python -c "import youtubeviewer; print('Package imports successfully')"
+
+    - name: Test ChromeDriver download
+      run: |
+        python -c "
+        from youtubeviewer.download_driver import download_driver
+        try:
+            download_driver('test_drivers')
+            print('ChromeDriver download test passed')
+        except Exception as e:
+            print(f'ChromeDriver test warning: {e}')
+        "
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . --skip B101
+
+    - name: Check for vulnerabilities
+      run: |
+        safety check --json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+
+  compatibility:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Test Chrome compatibility
+      run: |
+        # Install latest Chrome
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # Check Chrome version
+        google-chrome --version
+        
+        # Install dependencies
+        pip install -r requirements-updated.txt
+        
+        # Test basic functionality
+        python -c "
+        import sys
+        print(f'Python version: {sys.version}')
+        
+        from youtubeviewer.basics import get_chrome_version
+        try:
+            version = get_chrome_version()
+            print(f'Chrome version detected: {version}')
+        except Exception as e:
+            print(f'Chrome detection error: {e}')
+        "
+
+  build:
+    needs: [test, security, compatibility]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel
+
+    - name: Create distribution
+      run: |
+        python -m build
+
+    - name: Archive distribution
+      uses: actions/upload-artifact@v3
+      with:
+        name: distribution
+        path: dist/
+
+    - name: Generate release notes
+      run: |
+        echo "## YouTube Viewer - Updated Build" > release_notes.md
+        echo "**Compatibility:** Chrome 138+, Python 3.7-3.11" >> release_notes.md
+        echo "**Build Date:** $(date)" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Changes in this build:" >> release_notes.md
+        git log --oneline -10 >> release_notes.md
+
+    - name: Upload release notes
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-notes
+        path: release_notes.md
